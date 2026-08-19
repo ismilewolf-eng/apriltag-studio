@@ -1,0 +1,10 @@
+{
+  "name": "AprilTag & ArUco Print Studio",
+  "short_name": "AprilTagStudio",
+  "description": "Precision Visual Fiducial Marker Generator & Scaled 1:1 PDF Print Studio for Robotics, SLAM, and Computer Vision.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#090d16",
+  "theme_color": "#10b981",
+  "icons": []
+}

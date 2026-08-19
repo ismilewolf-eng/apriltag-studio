@@ -1,0 +1,1705 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AprilTag & ArUco Print Studio — Precision Visual Fiducial Marker Generator & Scaled 1:1 PDF Layout</title>
+  <meta name="description" content="Generate high-precision AprilTag (tag36h11, tag25h9, tag16h5, tagStandard41h12) and ArUco visual fiducial markers. Export 100% vector PDF print sheets at exact millimeter scale, clean SVG, and high-res PNG for robotics, SLAM, and OpenCV.">
+  <meta name="keywords" content="AprilTag generator, apriltag printable pdf, tag36h11, aruco marker generator, cv2 aruco, robotics fiducial marker, SLAM calibration, ROS2 apriltag, scaled 1:1 print sheet">
+  <link rel="canonical" href="https://apriltag.skillary.ai/">
+  
+  <!-- OpenGraph / Social Meta -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://apriltag.skillary.ai/">
+  <meta property="og:title" content="AprilTag & ArUco Print Studio — Precision Visual Fiducial Marker Generator">
+  <meta property="og:description" content="Generate high-precision visual markers with exact 1:1 physical millimeter scaling. Multi-tag A4/Letter PDF sheets, SVG, PNG, and ROS/OpenCV code snippets.">
+  <meta property="og:site_name" content="AprilTag Print Studio">
+
+  <!-- Schema.org WebApplication Markup -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "AprilTag & ArUco Print Studio",
+    "url": "https://apriltag.skillary.ai/",
+    "description": "Browser-local high-precision visual fiducial marker generator for AprilTag and ArUco. Supports millimeter-accurate 1:1 vector PDF sheets, SVGs, and ROS2 code integration.",
+    "applicationCategory": "UtilitiesApplication",
+    "operatingSystem": "All",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    }
+  }
+  </script>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#ecfdf5',
+              100: '#d1fae5',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+              accent: '#06b6d4',
+              darkbg: '#070a12',
+              cardbg: '#0e1424',
+              cardborder: '#1f293d'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
+            mono: ['JetBrains Mono', 'Fira Code', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- jsPDF CDN for vector PDF generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <style>
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: rgba(7, 10, 18, 0.8); }
+    ::-webkit-scrollbar-thumb { background: rgba(30, 41, 59, 0.8); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(16, 185, 129, 0.8); }
+
+    .paper-shadow {
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.08);
+    }
+    .grid-ruler {
+      background-size: 20px 20px;
+      background-image: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+    }
+  </style>
+</head>
+<body class="bg-[#070a12] text-slate-100 min-h-screen font-sans antialiased selection:bg-emerald-500/30 selection:text-emerald-300">
+
+  <!-- TOP HEADER -->
+  <header class="border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-emerald-500 to-cyan-600 p-0.5 shadow-lg shadow-emerald-500/20 flex items-center justify-center">
+          <div class="w-full h-full bg-slate-950 rounded-[7px] flex items-center justify-center p-1.5">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-full h-full text-emerald-400">
+              <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
+              <rect x="7" y="7" width="4" height="4" fill="currentColor"/>
+              <rect x="13" y="13" width="4" height="4" fill="currentColor"/>
+              <circle cx="12" cy="12" r="1.5" fill="#06b6d4"/>
+            </svg>
+          </div>
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <h1 class="text-base font-bold tracking-tight text-white flex items-center">
+              AprilTag Print Studio
+            </h1>
+            <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-medium">v1.0</span>
+          </div>
+          <p class="text-xs text-slate-400 hidden sm:block">Precision Visual Fiducial Marker Generator & Scaled 1:1 PDF Studio</p>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-2 sm:space-x-4 text-xs">
+        <span class="hidden md:inline-flex items-center px-2.5 py-1 rounded-full bg-slate-900 border border-slate-700/60 text-slate-300 space-x-1.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span>100% Client-Side Vector Engine</span>
+        </span>
+        <a href="#quick-guide" class="text-slate-300 hover:text-emerald-400 transition-colors px-2 py-1">Printing Guide</a>
+        <a href="#code-guide" class="text-slate-300 hover:text-emerald-400 transition-colors px-2 py-1 hidden sm:inline-block">ROS / OpenCV</a>
+        <a href="#faq-section" class="text-slate-300 hover:text-emerald-400 transition-colors px-2 py-1">FAQ</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN WORKSPACE -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    
+    <!-- Top Value Banner -->
+    <div class="mb-6 p-4 rounded-xl bg-gradient-to-r from-slate-900 via-slate-900 to-slate-800/80 border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div class="flex items-start space-x-3">
+        <div class="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0 mt-0.5">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <div>
+          <h2 class="text-sm font-semibold text-white">Exact Physical Millimeter Precision & Multi-Tag Batch Printing</h2>
+          <p class="text-xs text-slate-400 mt-0.5">Generate standard AprilTag (36h11, 25h9, 16h5) and ArUco markers calibrated to exact real-world dimensions. Export 1:1 scale vector PDFs with 100mm verification rulers and cutting guides.</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-2 shrink-0">
+        <button onclick="applyPreset('drone_50mm')" class="px-2.5 py-1 text-xs rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-colors">
+          🚁 Drone 50mm
+        </button>
+        <button onclick="applyPreset('slam_100mm')" class="px-2.5 py-1 text-xs rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-colors">
+          🤖 SLAM 100mm
+        </button>
+        <button onclick="applyPreset('a4_batch_12')" class="px-2.5 py-1 text-xs rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-colors">
+          📄 A4 Sheet (12 tags)
+        </button>
+      </div>
+    </div>
+
+    <!-- 2-Column Responsive Workspace Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+      <!-- LEFT COLUMN: CONTROLS & CONFIGURATION (5 cols) -->
+      <div class="lg:col-span-5 space-y-5">
+        
+        <!-- CARD 1: MARKER STANDARD & FAMILY -->
+        <div class="bg-[#0e1424] border border-slate-800 rounded-xl p-4 shadow-sm">
+          <div class="flex items-center justify-between mb-3">
+            <label class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"/></svg>
+              1. Marker Family
+            </label>
+            <span id="family-info-badge" class="text-[11px] font-mono px-2 py-0.5 rounded bg-slate-900 text-emerald-400 border border-slate-700">tag36h11 (587 tags)</span>
+          </div>
+
+          <!-- Standard Type Toggle (AprilTag vs ArUco) -->
+          <div class="grid grid-cols-2 gap-2 mb-3 bg-slate-950 p-1 rounded-lg border border-slate-800">
+            <button id="type-apriltag-btn" onclick="setMarkerType('apriltag')" class="py-1.5 px-3 rounded-md text-xs font-semibold bg-emerald-500 text-slate-950 shadow-sm transition-all text-center cursor-pointer">
+              AprilTag (ROS / SLAM)
+            </button>
+            <button id="type-aruco-btn" onclick="setMarkerType('aruco')" class="py-1.5 px-3 rounded-md text-xs font-medium text-slate-400 hover:text-slate-200 transition-all text-center cursor-pointer">
+              ArUco (OpenCV)
+            </button>
+          </div>
+
+          <!-- Family Dropdown Selector -->
+          <div>
+            <select id="family-select" onchange="onFamilyChange()" class="w-full bg-slate-950 border border-slate-700 text-white rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 outline-none cursor-pointer">
+            </select>
+          </div>
+
+          <!-- Family Spec & Guide Box -->
+          <div id="family-specs-card" class="mt-3 p-2.5 rounded-lg bg-slate-950/70 border border-slate-800/80 text-[11px] space-y-1 text-slate-400">
+            <div class="flex justify-between">
+              <span>Grid Layout:</span>
+              <span id="spec-grid" class="font-mono text-slate-200">6x6 inner bits (10x10 total)</span>
+            </div>
+            <div class="flex justify-between">
+              <span>Hamming Distance:</span>
+              <span id="spec-hamming" class="font-mono text-emerald-400">11 bits (Highest Immunity)</span>
+            </div>
+            <div class="flex justify-between">
+              <span>Total Available IDs:</span>
+              <span id="spec-total-ids" class="font-mono text-slate-200">587 (ID 0 to 586)</span>
+            </div>
+            <div class="pt-1 text-slate-400 text-[11px] leading-relaxed border-t border-slate-800/60" id="spec-usecase">
+              Standard for robotics, ROS2 SLAM, autonomous drones, and camera calibration.
+            </div>
+          </div>
+        </div>
+
+        <!-- CARD 2: GENERATION MODE & TAG ID -->
+        <div class="bg-[#0e1424] border border-slate-800 rounded-xl p-4 shadow-sm">
+          <div class="flex items-center justify-between mb-3">
+            <label class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"/></svg>
+              2. Mode & Tag IDs
+            </label>
+            <div class="flex space-x-1 bg-slate-950 p-0.5 rounded border border-slate-800 text-[11px]">
+              <button id="mode-single-btn" onclick="setGenMode('single')" class="px-2.5 py-0.5 rounded font-semibold bg-slate-800 text-white transition-all cursor-pointer">Single</button>
+              <button id="mode-batch-btn" onclick="setGenMode('batch')" class="px-2.5 py-0.5 rounded font-medium text-slate-400 hover:text-white transition-all cursor-pointer">Batch Sheet</button>
+            </div>
+          </div>
+
+          <!-- SINGLE MODE INPUTS -->
+          <div id="single-mode-panel" class="space-y-3">
+            <div>
+              <div class="flex justify-between items-center mb-1 text-xs">
+                <span class="text-slate-300">Marker ID:</span>
+                <span class="text-slate-400 font-mono">Max: <span id="max-id-label">586</span></span>
+              </div>
+              <div class="flex items-center space-x-2">
+                <button onclick="stepId(-1)" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-bold text-sm flex items-center justify-center shrink-0 cursor-pointer">-</button>
+                <input type="number" id="tag-id-input" value="0" min="0" max="586" oninput="onTagIdInput()" class="flex-1 bg-slate-950 border border-slate-700 text-white text-center font-mono font-bold text-sm rounded-lg py-1.5 focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 outline-none">
+                <button onclick="stepId(1)" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-bold text-sm flex items-center justify-center shrink-0 cursor-pointer">+</button>
+                <button onclick="randomId()" title="Random ID" class="px-2.5 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs text-slate-300 flex items-center space-x-1 shrink-0 cursor-pointer">
+                  <span>🎲</span>
+                </button>
+              </div>
+              <input type="range" id="tag-id-slider" value="0" min="0" max="586" oninput="onTagIdSlider()" class="w-full mt-2 accent-emerald-500 h-1 bg-slate-800 rounded-lg cursor-pointer">
+            </div>
+
+            <!-- Fast Jump ID Badges -->
+            <div class="flex items-center gap-1.5 flex-wrap pt-1 text-[11px]">
+              <span class="text-slate-500">Jump to:</span>
+              <button onclick="setTagId(0)" class="px-1.5 py-0.5 rounded bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 font-mono cursor-pointer">#0</button>
+              <button onclick="setTagId(1)" class="px-1.5 py-0.5 rounded bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 font-mono cursor-pointer">#1</button>
+              <button onclick="setTagId(2)" class="px-1.5 py-0.5 rounded bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 font-mono cursor-pointer">#2</button>
+              <button onclick="setTagId(5)" class="px-1.5 py-0.5 rounded bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 font-mono cursor-pointer">#5</button>
+              <button onclick="setTagId(10)" class="px-1.5 py-0.5 rounded bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 font-mono cursor-pointer">#10</button>
+              <button onclick="setTagId(42)" class="px-1.5 py-0.5 rounded bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 font-mono cursor-pointer">#42</button>
+              <button onclick="setTagId(100)" class="px-1.5 py-0.5 rounded bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 font-mono cursor-pointer">#100</button>
+            </div>
+          </div>
+
+          <!-- BATCH MODE INPUTS -->
+          <div id="batch-mode-panel" class="hidden space-y-3">
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="text-[11px] text-slate-400 block mb-1">Start ID:</label>
+                <input type="number" id="batch-start-id" value="0" min="0" oninput="onBatchChange()" class="w-full bg-slate-950 border border-slate-700 text-white font-mono text-xs rounded-lg px-2.5 py-1.5 focus:border-emerald-500 outline-none">
+              </div>
+              <div>
+                <label class="text-[11px] text-slate-400 block mb-1">Count of Tags:</label>
+                <input type="number" id="batch-count" value="12" min="1" max="100" oninput="onBatchChange()" class="w-full bg-slate-950 border border-slate-700 text-white font-mono text-xs rounded-lg px-2.5 py-1.5 focus:border-emerald-500 outline-none">
+              </div>
+            </div>
+            <div>
+              <label class="text-[11px] text-slate-400 block mb-1">Or Custom ID List (e.g. 0, 1, 2, 5, 8-12):</label>
+              <input type="text" id="batch-custom-list" placeholder="Leave empty to use Start + Count" oninput="onBatchCustomChange()" class="w-full bg-slate-950 border border-slate-700 text-white font-mono text-xs rounded-lg px-2.5 py-1.5 focus:border-emerald-500 outline-none">
+            </div>
+            <div class="p-2 bg-slate-950 rounded-lg border border-slate-800 text-[11px] flex justify-between text-slate-400">
+              <span>Total Selected: <strong id="batch-total-count" class="text-emerald-400 font-mono">12</strong> tags</span>
+              <span>Estimated Pages: <strong id="batch-pages-count" class="text-cyan-400 font-mono">1</strong> A4 Page</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- CARD 3: PHYSICAL PRINT DIMENSIONS -->
+        <div class="bg-[#0e1424] border border-slate-800 rounded-xl p-4 shadow-sm">
+          <div class="flex items-center justify-between mb-3">
+            <label class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+              3. Physical Print Size (1:1 Scale)
+            </label>
+            <div class="flex space-x-1 bg-slate-950 p-0.5 rounded border border-slate-800 text-[11px]">
+              <button id="unit-mm-btn" onclick="setUnit('mm')" class="px-2 py-0.5 rounded font-semibold bg-emerald-500 text-slate-950 cursor-pointer">mm</button>
+              <button id="unit-in-btn" onclick="setUnit('in')" class="px-2 py-0.5 rounded font-medium text-slate-400 hover:text-white cursor-pointer">inch</button>
+            </div>
+          </div>
+
+          <div class="space-y-3">
+            <div>
+              <div class="flex justify-between items-center mb-1 text-xs">
+                <span class="text-slate-300">Target Outer Width:</span>
+                <span class="text-emerald-400 font-mono font-bold text-sm"><span id="size-val-display">50.0</span> <span id="size-unit-display">mm</span></span>
+              </div>
+              <div class="flex items-center space-x-2">
+                <input type="number" id="size-number-input" value="50" min="10" max="500" step="1" oninput="onSizeNumberInput()" class="flex-1 bg-slate-950 border border-slate-700 text-white font-mono font-bold text-xs rounded-lg px-3 py-1.5 focus:border-emerald-500 outline-none">
+                <span class="text-xs text-slate-400 font-mono" id="size-unit-addon">mm</span>
+              </div>
+              <input type="range" id="size-slider" value="50" min="10" max="300" step="1" oninput="onSizeSlider()" class="w-full mt-2 accent-emerald-500 h-1 bg-slate-800 rounded-lg cursor-pointer">
+            </div>
+
+            <!-- Quick Size Presets -->
+            <div class="grid grid-cols-4 gap-1.5 text-[11px]">
+              <button onclick="setSize(30)" class="py-1 rounded bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 text-center font-mono cursor-pointer">30mm</button>
+              <button onclick="setSize(50)" class="py-1 rounded bg-slate-950 hover:bg-slate-800 border border-slate-800 text-emerald-400 font-mono font-bold cursor-pointer">50mm</button>
+              <button onclick="setSize(80)" class="py-1 rounded bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 text-center font-mono cursor-pointer">80mm</button>
+              <button onclick="setSize(100)" class="py-1 rounded bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 text-center font-mono cursor-pointer">100mm</button>
+              <button onclick="setSize(150)" class="py-1 rounded bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 text-center font-mono cursor-pointer">150mm</button>
+              <button onclick="setSize(200)" class="py-1 rounded bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 text-center font-mono cursor-pointer">200mm</button>
+              <button onclick="setSize(50.8)" class="py-1 rounded bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 text-center font-mono cursor-pointer">2 inch</button>
+              <button onclick="setSize(101.6)" class="py-1 rounded bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 text-center font-mono cursor-pointer">4 inch</button>
+            </div>
+
+            <!-- Computed Optical Specs -->
+            <div class="p-2.5 rounded-lg bg-slate-950/70 border border-slate-800/80 text-[11px] space-y-1.5 text-slate-400">
+              <div class="flex justify-between">
+                <span>Inner Active Matrix:</span>
+                <span id="metric-inner-size" class="font-mono text-slate-200">30.0 mm</span>
+              </div>
+              <div class="flex justify-between">
+                <span>Single Bit (Pixel) Width:</span>
+                <span id="metric-bit-size" class="font-mono text-slate-200">5.0 mm</span>
+              </div>
+              <div class="flex justify-between">
+                <span>Est. Detection Range (720p):</span>
+                <span id="metric-detect-range" class="font-mono text-cyan-400">0.2 m ~ 2.5 m</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CARD 4: BORDERS, MARGINS & ANNOTATIONS -->
+        <div class="bg-[#0e1424] border border-slate-800 rounded-xl p-4 shadow-sm">
+          <label class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5 mb-3">
+            <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+            4. Annotations & Guides
+          </label>
+          <div class="space-y-2 text-xs">
+            <label class="flex items-center justify-between cursor-pointer p-1.5 rounded hover:bg-slate-800/50">
+              <span class="text-slate-300">Outer White Quiet Zone (Margin)</span>
+              <input type="checkbox" id="opt-quiet-zone" checked onchange="onRenderOptionChange()" class="accent-emerald-500 w-4 h-4 rounded">
+            </label>
+            <label class="flex items-center justify-between cursor-pointer p-1.5 rounded hover:bg-slate-800/50">
+              <span class="text-slate-300">Human-Readable Info Label (ID & Size)</span>
+              <input type="checkbox" id="opt-labels" checked onchange="onRenderOptionChange()" class="accent-emerald-500 w-4 h-4 rounded">
+            </label>
+            <label class="flex items-center justify-between cursor-pointer p-1.5 rounded hover:bg-slate-800/50">
+              <span class="text-slate-300">Scissor Dashed Cut Guides</span>
+              <input type="checkbox" id="opt-cutlines" checked onchange="onRenderOptionChange()" class="accent-emerald-500 w-4 h-4 rounded">
+            </label>
+            <label class="flex items-center justify-between cursor-pointer p-1.5 rounded hover:bg-slate-800/50">
+              <span class="text-slate-300">Corner Crosshairs & Alignment Marks</span>
+              <input type="checkbox" id="opt-crosshairs" checked onchange="onRenderOptionChange()" class="accent-emerald-500 w-4 h-4 rounded">
+            </label>
+          </div>
+        </div>
+
+        <!-- CARD 5: PAPER SHEET & PDF PAGE SETTINGS -->
+        <div class="bg-[#0e1424] border border-slate-800 rounded-xl p-4 shadow-sm">
+          <label class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5 mb-3">
+            <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            5. PDF Paper & Layout
+          </label>
+          <div class="grid grid-cols-2 gap-3 text-xs">
+            <div>
+              <span class="text-slate-400 block mb-1 text-[11px]">Paper Standard:</span>
+              <select id="paper-select" onchange="onPaperChange()" class="w-full bg-slate-950 border border-slate-700 text-white rounded-lg px-2.5 py-1.5 text-xs outline-none cursor-pointer">
+                <option value="a4" selected>A4 (210 x 297 mm)</option>
+                <option value="a3">A3 (297 x 420 mm)</option>
+                <option value="letter">US Letter (8.5 x 11 in)</option>
+                <option value="legal">US Legal (8.5 x 14 in)</option>
+              </select>
+            </div>
+            <div>
+              <span class="text-slate-400 block mb-1 text-[11px]">Orientation:</span>
+              <select id="orient-select" onchange="onPaperChange()" class="w-full bg-slate-950 border border-slate-700 text-white rounded-lg px-2.5 py-1.5 text-xs outline-none cursor-pointer">
+                <option value="portrait" selected>Portrait</option>
+                <option value="landscape">Landscape</option>
+              </select>
+            </div>
+          </div>
+          <div class="mt-3 flex items-center justify-between text-xs">
+            <span class="text-slate-300">100mm Scale Calibration Bar on Sheet:</span>
+            <input type="checkbox" id="opt-sheet-ruler" checked onchange="onRenderOptionChange()" class="accent-emerald-500 w-4 h-4 rounded">
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT COLUMN: INTERACTIVE PREVIEW, ACTIONS & TOOLS (7 cols) -->
+      <div class="lg:col-span-7 space-y-5">
+        
+        <!-- EXPORT ACTION TOOLBAR -->
+        <div class="bg-[#0e1424]/95 border border-slate-800 rounded-xl p-3.5 shadow-md backdrop-blur-md flex flex-wrap items-center justify-between gap-3 sticky top-20 z-40">
+          <div class="flex items-center space-x-2">
+            <span class="text-xs font-semibold text-white">Export:</span>
+            <span id="export-summary-badge" class="text-[11px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">A4 Vector PDF (1:1)</span>
+          </div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <button onclick="downloadPDF()" class="px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-slate-950 font-bold text-xs flex items-center space-x-1.5 shadow-md shadow-emerald-500/20 transition-all cursor-pointer">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              <span>Download PDF</span>
+            </button>
+            <button onclick="downloadSVG()" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-medium text-xs flex items-center space-x-1 transition-all cursor-pointer">
+              <svg class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              <span>SVG</span>
+            </button>
+            <button onclick="downloadPNG(2000)" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-medium text-xs flex items-center space-x-1 transition-all cursor-pointer">
+              <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+              <span>PNG (2k)</span>
+            </button>
+            <button onclick="copySVGCode()" id="copy-svg-btn" class="px-2.5 py-2 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 text-xs transition-all cursor-pointer" title="Copy SVG markup">
+              📋
+            </button>
+          </div>
+        </div>
+
+        <!-- PREVIEW TABS -->
+        <div class="bg-[#0e1424] border border-slate-800 rounded-xl overflow-hidden shadow-sm">
+          <div class="flex items-center justify-between border-b border-slate-800 px-4 bg-slate-950">
+            <div class="flex space-x-1 -mb-px text-xs">
+              <button id="tab-sheet-btn" onclick="setPreviewTab('sheet')" class="py-3 px-3 font-semibold border-b-2 border-emerald-500 text-white flex items-center space-x-1.5 transition-all cursor-pointer">
+                <span>📄 Print Sheet</span>
+              </button>
+              <button id="tab-single-btn" onclick="setPreviewTab('single')" class="py-3 px-3 font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center space-x-1.5 transition-all cursor-pointer">
+                <span>🔍 Vector Zoom</span>
+              </button>
+              <button id="tab-calib-btn" onclick="setPreviewTab('calib')" class="py-3 px-3 font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center space-x-1.5 transition-all cursor-pointer">
+                <span>📏 1:1 Screen Scale</span>
+              </button>
+              <button id="tab-code-btn" onclick="setPreviewTab('code')" class="py-3 px-3 font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center space-x-1.5 transition-all cursor-pointer">
+                <span>💻 ROS / OpenCV</span>
+              </button>
+            </div>
+            
+            <!-- Zoom Controls for Sheet -->
+            <div id="sheet-zoom-controls" class="flex items-center space-x-1 text-xs text-slate-400">
+              <button onclick="changeSheetZoom(-0.1)" class="w-6 h-6 rounded bg-slate-800 hover:bg-slate-700 text-white flex items-center justify-center cursor-pointer">-</button>
+              <span id="zoom-level-label" class="font-mono text-[11px] w-12 text-center text-slate-300">85%</span>
+              <button onclick="changeSheetZoom(0.1)" class="w-6 h-6 rounded bg-slate-800 hover:bg-slate-700 text-white flex items-center justify-center cursor-pointer">+</button>
+              <button onclick="fitSheetZoom()" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-[10px] text-slate-300 ml-1 cursor-pointer">Fit</button>
+            </div>
+          </div>
+
+          <!-- TAB 1: VIRTUAL PRINT SHEET PREVIEW -->
+          <div id="view-sheet-tab" class="p-6 bg-slate-950/80 min-h-[500px] flex flex-col items-center justify-center overflow-auto grid-ruler">
+            <div id="virtual-paper" class="bg-white text-slate-900 rounded-sm paper-shadow transition-all duration-150 relative select-none">
+            </div>
+            <div id="sheet-pagination" class="mt-4 flex items-center space-x-3 text-xs bg-slate-900 px-3 py-1.5 rounded-full border border-slate-800">
+              <button onclick="prevPage()" class="text-slate-400 hover:text-white px-2 cursor-pointer">← Prev</button>
+              <span class="text-slate-300 font-mono">Page <span id="cur-page-num">1</span> of <span id="total-page-num">1</span></span>
+              <button onclick="nextPage()" class="text-slate-400 hover:text-white px-2 cursor-pointer">Next →</button>
+            </div>
+          </div>
+
+          <!-- TAB 2: SINGLE VECTOR INSPECTOR TAB -->
+          <div id="view-single-tab" class="hidden p-6 bg-slate-950 min-h-[500px] flex flex-col items-center justify-center">
+            <div id="single-svg-container" class="bg-white p-6 rounded-lg paper-shadow max-w-[340px] max-h-[340px] flex items-center justify-center">
+            </div>
+            <div class="mt-4 text-center text-xs text-slate-400 space-y-1">
+              <p class="font-mono text-emerald-400" id="single-inspect-info">Family: tag36h11 | ID: 0 | 10x10 Grid</p>
+              <p class="text-[11px] text-slate-500">Lossless SVG vector rendering with pixel-aligned quiet zone</p>
+            </div>
+          </div>
+
+          <!-- TAB 3: 1:1 SCREEN SCALE CALIBRATOR -->
+          <div id="view-calib-tab" class="hidden p-6 bg-slate-950 min-h-[500px] space-y-6">
+            <div class="max-w-md mx-auto bg-slate-900 border border-slate-800 rounded-xl p-4 text-xs space-y-4">
+              <div class="flex items-start space-x-3">
+                <span class="text-xl">💳</span>
+                <div>
+                  <h3 class="font-bold text-white text-sm">Screen Calibration (Match Credit Card)</h3>
+                  <p class="text-slate-400 text-[11px] mt-0.5">Hold a standard credit card (or ID card, exactly 85.60 mm wide) against the screen, then adjust the slider until the blue box below matches your card.</p>
+                </div>
+              </div>
+
+              <div class="py-4 flex justify-center">
+                <div id="calib-card" class="h-24 bg-gradient-to-r from-cyan-600/30 to-blue-600/30 border-2 border-cyan-400 rounded-lg flex items-center justify-center font-mono text-cyan-300 text-xs font-bold transition-all select-none">
+                  Standard Card (85.60 mm)
+                </div>
+              </div>
+
+              <div>
+                <div class="flex justify-between text-[11px] text-slate-400 mb-1">
+                  <span>Card Width Adjustment:</span>
+                  <span class="font-mono text-cyan-400"><span id="calib-px-display">324</span> px (<span id="calib-dpi-display">96</span> DPI)</span>
+                </div>
+                <input type="range" id="calib-slider" value="324" min="200" max="500" oninput="onCalibSlider()" class="w-full accent-cyan-400 h-1 bg-slate-800 rounded-lg cursor-pointer">
+              </div>
+
+              <div class="pt-2 border-t border-slate-800 flex justify-between items-center text-[11px]">
+                <span class="text-emerald-400">✓ Calibrated 1:1 preview active</span>
+                <button onclick="resetCalibration()" class="text-slate-400 hover:text-white underline cursor-pointer">Reset to 96 DPI</button>
+              </div>
+            </div>
+
+            <div class="text-center space-y-2">
+              <span class="text-xs text-slate-400 font-medium">True 1:1 Real-World Physical Scale on this Screen:</span>
+              <div class="flex justify-center p-4">
+                <div id="calibrated-marker-preview" class="bg-white p-2 rounded paper-shadow inline-block">
+                </div>
+              </div>
+              <p class="text-[11px] text-slate-500 font-mono">Target: <span id="calib-target-size-label">50.0 mm</span></p>
+            </div>
+          </div>
+
+          <!-- TAB 4: ROS & OPENCV CODE SNIPPETS -->
+          <div id="view-code-tab" class="hidden p-5 bg-slate-950 min-h-[500px] space-y-4">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-white flex items-center gap-1.5">
+                <span>⚡</span> Ready-to-use Detection Code
+              </span>
+              <div class="flex space-x-1 bg-slate-900 p-0.5 rounded border border-slate-800 text-[11px]">
+                <button id="code-py-btn" onclick="setCodeTab('py')" class="px-2.5 py-1 rounded font-semibold bg-emerald-500 text-slate-950 cursor-pointer">Python (OpenCV/AprilTag)</button>
+                <button id="code-ros-btn" onclick="setCodeTab('ros')" class="px-2.5 py-1 rounded font-medium text-slate-400 hover:text-white cursor-pointer">ROS 2 (apriltag_ros)</button>
+                <button id="code-cpp-btn" onclick="setCodeTab('cpp')" class="px-2.5 py-1 rounded font-medium text-slate-400 hover:text-white cursor-pointer">C++ OpenCV</button>
+              </div>
+            </div>
+
+            <div class="relative">
+              <button onclick="copyCodeSnippet()" class="absolute top-3 right-3 px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-[11px] text-slate-300 border border-slate-700 flex items-center space-x-1 z-10 cursor-pointer">
+                <span id="copy-code-text">Copy Code</span>
+              </button>
+              <pre id="code-snippet-pre" class="bg-slate-900 p-4 rounded-xl border border-slate-800 text-xs font-mono text-emerald-300 overflow-x-auto leading-relaxed max-h-[380px]"></pre>
+            </div>
+            <p class="text-[11px] text-slate-500">Code is automatically updated with your selected tag family and physical dimensions (<span id="code-metric-label">50.0 mm</span>).</p>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- EDUCATIONAL & SEO RESOURCE SECTIONS -->
+    <section id="quick-guide" class="mt-16 border-t border-slate-800/80 pt-10 space-y-12">
+      
+      <!-- Section 1: Comparison Matrix -->
+      <div>
+        <div class="text-center max-w-2xl mx-auto mb-8">
+          <h2 class="text-xl font-bold text-white tracking-tight">Visual Fiducial Marker Comparison Guide</h2>
+          <p class="text-xs text-slate-400 mt-1">Choose the optimal marker family for your robotics, autonomous drone, SLAM, or camera tracking pipeline.</p>
+        </div>
+
+        <div class="overflow-x-auto bg-slate-900/60 border border-slate-800 rounded-xl">
+          <table class="w-full text-left text-xs text-slate-300">
+            <thead class="bg-slate-950 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-800">
+              <tr>
+                <th class="px-4 py-3">Family</th>
+                <th class="px-4 py-3">Inner Bits</th>
+                <th class="px-4 py-3">Hamming Distance</th>
+                <th class="px-4 py-3">Max IDs</th>
+                <th class="px-4 py-3">False Positive Immunity</th>
+                <th class="px-4 py-3">Primary Use Cases</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800/60 font-mono text-[11px]">
+              <tr class="hover:bg-slate-800/30">
+                <td class="px-4 py-3 font-bold text-emerald-400 font-sans">AprilTag 36h11</td>
+                <td class="px-4 py-3">6x6</td>
+                <td class="px-4 py-3 text-emerald-400 font-bold">11 bits</td>
+                <td class="px-4 py-3">587</td>
+                <td class="px-4 py-3 text-emerald-400">Extreme (Near Zero)</td>
+                <td class="px-4 py-3 font-sans text-slate-300">ROS2 SLAM, Drone precision landing, camera calibration standard</td>
+              </tr>
+              <tr class="hover:bg-slate-800/30">
+                <td class="px-4 py-3 font-bold text-white font-sans">AprilTag 25h9</td>
+                <td class="px-4 py-3">5x5</td>
+                <td class="px-4 py-3">9 bits</td>
+                <td class="px-4 py-3">35</td>
+                <td class="px-4 py-3 text-slate-300">Very High</td>
+                <td class="px-4 py-3 font-sans text-slate-300">Medium distance robotics, faster corner detection</td>
+              </tr>
+              <tr class="hover:bg-slate-800/30">
+                <td class="px-4 py-3 font-bold text-white font-sans">AprilTag 16h5</td>
+                <td class="px-4 py-3">4x4</td>
+                <td class="px-4 py-3">5 bits</td>
+                <td class="px-4 py-3">30</td>
+                <td class="px-4 py-3 text-amber-400">Moderate</td>
+                <td class="px-4 py-3 font-sans text-slate-300">Long-range low-resolution detection; high speed embedded</td>
+              </tr>
+              <tr class="hover:bg-slate-800/30">
+                <td class="px-4 py-3 font-bold text-cyan-400 font-sans">ArUco 4x4 (50-1000)</td>
+                <td class="px-4 py-3">4x4</td>
+                <td class="px-4 py-3">3~7 bits</td>
+                <td class="px-4 py-3">50 ~ 1000</td>
+                <td class="px-4 py-3 text-slate-300">High</td>
+                <td class="px-4 py-3 font-sans text-slate-300">OpenCV native cv2.aruco, augmented reality, fast tracking</td>
+              </tr>
+              <tr class="hover:bg-slate-800/30">
+                <td class="px-4 py-3 font-bold text-cyan-400 font-sans">ArUco 6x6 (50-1000)</td>
+                <td class="px-4 py-3">6x6</td>
+                <td class="px-4 py-3">5~11 bits</td>
+                <td class="px-4 py-3">50 ~ 1000</td>
+                <td class="px-4 py-3 text-emerald-400">Very High</td>
+                <td class="px-4 py-3 font-sans text-slate-300">Multi-robot tracking, warehouse AGV localization</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Section 2: Printing Best Practices -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-slate-900/60 border border-slate-800 p-4 rounded-xl space-y-2">
+          <div class="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-bold text-xs">1</div>
+          <h3 class="text-sm font-semibold text-white">Disable "Fit to Page"</h3>
+          <p class="text-xs text-slate-400 leading-relaxed">In your printer dialog, ensure scaling is strictly set to <strong>"Actual Size" (100%)</strong>. "Fit to Printable Area" will shrink the tags by 3~6%, breaking 3D distance calculations.</p>
+        </div>
+        <div class="bg-slate-900/60 border border-slate-800 p-4 rounded-xl space-y-2">
+          <div class="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-bold text-xs">2</div>
+          <h3 class="text-sm font-semibold text-white">Use Matte Paper & Backing</h3>
+          <p class="text-xs text-slate-400 leading-relaxed">Glossy photo paper causes specular reflection highlights under room lighting, blinding threshold detectors. Mount printed tags onto rigid flat boards (foam / acrylic).</p>
+        </div>
+        <div class="bg-slate-900/60 border border-slate-800 p-4 rounded-xl space-y-2">
+          <div class="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-bold text-xs">3</div>
+          <h3 class="text-sm font-semibold text-white">Measure with Verification Bar</h3>
+          <p class="text-xs text-slate-400 leading-relaxed">Every exported PDF includes a 100 mm scale ruler. Always take a physical caliper or ruler to confirm the bar measures exactly 10.0 cm before running SLAM experiments.</p>
+        </div>
+      </div>
+
+      <!-- Section 3: FAQ Accordion -->
+      <div id="faq-section" class="space-y-4 max-w-3xl mx-auto">
+        <h2 class="text-xl font-bold text-white tracking-tight text-center mb-6">Frequently Asked Questions</h2>
+        
+        <div class="bg-slate-900/70 border border-slate-800 rounded-lg p-4 space-y-1">
+          <h3 class="text-xs font-bold text-emerald-400">Why are my AprilTag detection distance measurements incorrect?</h3>
+          <p class="text-xs text-slate-400 leading-relaxed">In 95% of cases, the detector code was configured with a tag size (e.g. 0.05m) that differed from the actual printed size. If you print a 50mm tag with "Fit to Page" enabled, the actual paper tag becomes 47.2mm, resulting in a ~6% depth error.</p>
+        </div>
+
+        <div class="bg-slate-900/70 border border-slate-800 rounded-lg p-4 space-y-1">
+          <h3 class="text-xs font-bold text-emerald-400">What is Hamming Distance and why does 36h11 matter?</h3>
+          <p class="text-xs text-slate-400 leading-relaxed">Hamming distance is the minimum number of bit errors required to accidentally mutate one valid tag ID into another valid ID. 36h11 has a distance of 11, meaning up to 5 bits can be occluded or misread without producing a false positive detection.</p>
+        </div>
+
+        <div class="bg-slate-900/70 border border-slate-800 rounded-lg p-4 space-y-1">
+          <h3 class="text-xs font-bold text-emerald-400">Are my tags uploaded to any cloud server?</h3>
+          <p class="text-xs text-slate-400 leading-relaxed">No. AprilTag Print Studio runs 100% inside your browser using client-side JavaScript, HTML5 Canvas, and jsPDF. Zero data leaves your computer, ensuring complete privacy for proprietary robotic setups.</p>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="border-t border-slate-800/80 bg-slate-950 mt-16 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+      <div class="flex items-center space-x-2">
+        <span class="font-semibold text-slate-400">AprilTag Print Studio</span>
+        <span>· Free & Open Visual Fiducial Generator</span>
+      </div>
+      <div class="flex items-center space-x-4">
+        <span>100% Client-Side Privacy</span>
+        <span>•</span>
+        <span>A4 / Letter Scaled PDF</span>
+        <span>•</span>
+        <span>ROS2 & OpenCV Compatible</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- LOAD DATA BUNDLE -->
+  <script src="markers-data.js"></script>
+
+
+  <script>
+    const state = {
+      type: 'apriltag',
+      family: 'tag36h11',
+      genMode: 'single',
+      tagId: 0,
+      batchStart: 0,
+      batchCount: 12,
+      batchCustomList: '',
+      unit: 'mm',
+      sizeMm: 50.0,
+      quietZone: true,
+      labels: true,
+      cutlines: true,
+      crosshairs: true,
+      sheetRuler: true,
+      paper: 'a4',
+      orientation: 'portrait',
+      previewTab: 'sheet',
+      sheetZoom: 0.85,
+      curPage: 1,
+      screenDpi: 96,
+      codeTab: 'py'
+    };
+
+    const PAPER_SIZES = {
+      a4: { w: 210, h: 297, name: 'A4' },
+      a3: { w: 297, h: 420, name: 'A3' },
+      letter: { w: 215.9, h: 279.4, name: 'US Letter' },
+      legal: { w: 215.9, h: 355.6, name: 'US Legal' }
+    };
+
+    window.addEventListener('DOMContentLoaded', () => {
+      populateFamilyDropdown();
+      loadStoredCalibration();
+      updateAll();
+      setPreviewTab('sheet');
+    });
+
+    function loadStoredCalibration() {
+      try {
+        const savedDpi = localStorage.getItem('apriltag_calib_dpi');
+        if (savedDpi) {
+          state.screenDpi = parseFloat(savedDpi) || 96;
+          const slider = document.getElementById('calib-slider');
+          if (slider) slider.value = Math.round(state.screenDpi * (85.6 / 25.4));
+        }
+      } catch(e) {}
+    }
+
+    function populateFamilyDropdown() {
+      const sel = document.getElementById('family-select');
+      if (!sel) return;
+      sel.innerHTML = '';
+      if (!window.MARKER_DATA) return;
+
+      if (state.type === 'apriltag') {
+        const families = Object.keys(window.MARKER_DATA.apriltag);
+        families.forEach(f => {
+          const opt = document.createElement('option');
+          opt.value = f;
+          const famInfo = window.MARKER_DATA.apriltag[f];
+          opt.textContent = f + ' (' + famInfo.ncodes + ' tags · ' + famInfo.nbits + ' bits)';
+          if (f === state.family) opt.selected = true;
+          sel.appendChild(opt);
+        });
+      } else {
+        const arucoDicts = [
+          { key: 'DICT_4X4_50', label: 'ArUco 4x4 (50 IDs)' },
+          { key: 'DICT_4X4_100', label: 'ArUco 4x4 (100 IDs)' },
+          { key: 'DICT_4X4_250', label: 'ArUco 4x4 (250 IDs)' },
+          { key: 'DICT_4X4_1000', label: 'ArUco 4x4 (1000 IDs)' },
+          { key: 'DICT_5X5_50', label: 'ArUco 5x5 (50 IDs)' },
+          { key: 'DICT_5X5_100', label: 'ArUco 5x5 (100 IDs)' },
+          { key: 'DICT_5X5_250', label: 'ArUco 5x5 (250 IDs)' },
+          { key: 'DICT_5X5_1000', label: 'ArUco 5x5 (1000 IDs)' },
+          { key: 'DICT_6X6_50', label: 'ArUco 6x6 (50 IDs)' },
+          { key: 'DICT_6X6_100', label: 'ArUco 6x6 (100 IDs)' },
+          { key: 'DICT_6X6_250', label: 'ArUco 6x6 (250 IDs)' },
+          { key: 'DICT_6X6_1000', label: 'ArUco 6x6 (1000 IDs)' },
+          { key: 'DICT_7X7_50', label: 'ArUco 7x7 (50 IDs)' },
+          { key: 'DICT_7X7_100', label: 'ArUco 7x7 (100 IDs)' },
+          { key: 'DICT_7X7_250', label: 'ArUco 7x7 (250 IDs)' },
+          { key: 'DICT_7X7_1000', label: 'ArUco 7x7 (1000 IDs)' },
+          { key: 'DICT_ARUCO', label: 'ArUco Original (1024 IDs)' }
+        ];
+        arucoDicts.forEach(d => {
+          const opt = document.createElement('option');
+          opt.value = d.key;
+          opt.textContent = d.label;
+          if (d.key === state.family) opt.selected = true;
+          sel.appendChild(opt);
+        });
+      }
+    }
+
+    function setMarkerType(type) {
+      state.type = type;
+      const atBtn = document.getElementById('type-apriltag-btn');
+      const arucoBtn = document.getElementById('type-aruco-btn');
+      if (type === 'apriltag') {
+        state.family = 'tag36h11';
+        if (atBtn) atBtn.className = 'py-1.5 px-3 rounded-md text-xs font-semibold bg-emerald-500 text-slate-950 shadow-sm transition-all text-center cursor-pointer';
+        if (arucoBtn) arucoBtn.className = 'py-1.5 px-3 rounded-md text-xs font-medium text-slate-400 hover:text-slate-200 transition-all text-center cursor-pointer';
+      } else {
+        state.family = 'DICT_4X4_50';
+        if (arucoBtn) arucoBtn.className = 'py-1.5 px-3 rounded-md text-xs font-semibold bg-cyan-500 text-slate-950 shadow-sm transition-all text-center cursor-pointer';
+        if (atBtn) atBtn.className = 'py-1.5 px-3 rounded-md text-xs font-medium text-slate-400 hover:text-slate-200 transition-all text-center cursor-pointer';
+      }
+      populateFamilyDropdown();
+      onFamilyChange();
+    }
+
+    function onFamilyChange() {
+      const sel = document.getElementById('family-select');
+      if (sel) state.family = sel.value;
+      const maxId = getMaxIdForFamily(state.family);
+      const idInput = document.getElementById('tag-id-input');
+      const idSlider = document.getElementById('tag-id-slider');
+      const maxLabel = document.getElementById('max-id-label');
+      if (idInput) idInput.max = maxId;
+      if (idSlider) idSlider.max = maxId;
+      if (maxLabel) maxLabel.textContent = maxId;
+      if (state.tagId > maxId) {
+        state.tagId = 0;
+        if (idInput) idInput.value = 0;
+        if (idSlider) idSlider.value = 0;
+      }
+      updateFamilySpecs();
+      updateAll();
+    }
+
+    function getMaxIdForFamily(fam) {
+      if (!window.MARKER_DATA) return 586;
+      if (state.type === 'apriltag') {
+        const f = window.MARKER_DATA.apriltag[fam];
+        return f ? f.ncodes - 1 : 586;
+      } else {
+        if (fam.endsWith('_50')) return 49;
+        if (fam.endsWith('_100')) return 99;
+        if (fam.endsWith('_250')) return 249;
+        if (fam.endsWith('_1000')) return 999;
+        if (fam === 'DICT_ARUCO') return 1023;
+        return 249;
+      }
+    }
+
+    function updateFamilySpecs() {
+      const famBadge = document.getElementById('family-info-badge');
+      const specGrid = document.getElementById('spec-grid');
+      const specHamming = document.getElementById('spec-hamming');
+      const specTotal = document.getElementById('spec-total-ids');
+      const specUsecase = document.getElementById('spec-usecase');
+
+      if (state.type === 'apriltag') {
+        const famData = window.MARKER_DATA ? window.MARKER_DATA.apriltag[state.family] : null;
+        if (!famData) return;
+        if (famBadge) famBadge.textContent = state.family + ' (' + famData.ncodes + ' tags)';
+        if (specGrid) specGrid.textContent = famData.nbits + ' bits inner (' + famData.total_width + 'x' + famData.total_width + ' outer)';
+        if (specTotal) specTotal.textContent = famData.ncodes + ' (ID 0 to ' + (famData.ncodes - 1) + ')';
+        if (state.family === 'tag36h11') {
+          if (specHamming) specHamming.textContent = '11 bits (Highest Immunity)';
+          if (specUsecase) specUsecase.textContent = 'Default standard for ROS2, SLAM, drone landing, and camera calibration.';
+        } else if (state.family === 'tag25h9') {
+          if (specHamming) specHamming.textContent = '9 bits (Fast & Robust)';
+          if (specUsecase) specUsecase.textContent = 'Faster processing for medium-range embedded computer vision.';
+        } else if (state.family === 'tag16h5') {
+          if (specHamming) specHamming.textContent = '5 bits (Long Range)';
+          if (specUsecase) specUsecase.textContent = 'Long range low-res detection where CPU cycles are strictly limited.';
+        } else {
+          if (specHamming) specHamming.textContent = 'Standard';
+          if (specUsecase) specUsecase.textContent = 'Specialized layout for high ID density visual markers.';
+        }
+      } else {
+        if (famBadge) famBadge.textContent = state.family;
+        if (specGrid) specGrid.textContent = 'OpenCV ArUco Marker Grid';
+        if (specHamming) specHamming.textContent = 'OpenCV Optimized Dictionary';
+        if (specTotal) specTotal.textContent = (getMaxIdForFamily(state.family) + 1) + ' IDs';
+        if (specUsecase) specUsecase.textContent = 'Native OpenCV cv2.aruco integration, AR markers, and robotics tracking.';
+      }
+    }
+
+    function setGenMode(mode) {
+      state.genMode = mode;
+      const singleBtn = document.getElementById('mode-single-btn');
+      const batchBtn = document.getElementById('mode-batch-btn');
+      const singlePanel = document.getElementById('single-mode-panel');
+      const batchPanel = document.getElementById('batch-mode-panel');
+
+      if (mode === 'single') {
+        if (singleBtn) singleBtn.className = 'px-2 py-0.5 rounded font-semibold bg-slate-800 text-white transition-all cursor-pointer';
+        if (batchBtn) batchBtn.className = 'px-2 py-0.5 rounded font-medium text-slate-400 hover:text-white transition-all cursor-pointer';
+        if (singlePanel) singlePanel.classList.remove('hidden');
+        if (batchPanel) batchPanel.classList.add('hidden');
+      } else {
+        if (batchBtn) batchBtn.className = 'px-2 py-0.5 rounded font-semibold bg-cyan-600 text-white transition-all cursor-pointer';
+        if (singleBtn) singleBtn.className = 'px-2 py-0.5 rounded font-medium text-slate-400 hover:text-white transition-all cursor-pointer';
+        if (batchPanel) batchPanel.classList.remove('hidden');
+        if (singlePanel) singlePanel.classList.add('hidden');
+      }
+      updateAll();
+    }
+
+    function setTagId(id) {
+      const max = getMaxIdForFamily(state.family);
+      state.tagId = Math.max(0, Math.min(max, id));
+      const idInput = document.getElementById('tag-id-input');
+      const idSlider = document.getElementById('tag-id-slider');
+      if (idInput) idInput.value = state.tagId;
+      if (idSlider) idSlider.value = state.tagId;
+      updateAll();
+    }
+
+    function stepId(delta) {
+      setTagId(state.tagId + delta);
+    }
+
+    function randomId() {
+      const max = getMaxIdForFamily(state.family);
+      setTagId(Math.floor(Math.random() * (max + 1)));
+    }
+
+    function onTagIdInput() {
+      const el = document.getElementById('tag-id-input');
+      const val = el ? parseInt(el.value) || 0 : 0;
+      setTagId(val);
+    }
+
+    function onTagIdSlider() {
+      const el = document.getElementById('tag-id-slider');
+      const val = el ? parseInt(el.value) || 0 : 0;
+      setTagId(val);
+    }
+
+    function onBatchChange() {
+      const startEl = document.getElementById('batch-start-id');
+      const countEl = document.getElementById('batch-count');
+      state.batchStart = startEl ? parseInt(startEl.value) || 0 : 0;
+      state.batchCount = countEl ? parseInt(countEl.value) || 12 : 12;
+      updateAll();
+    }
+
+    function onBatchCustomChange() {
+      const el = document.getElementById('batch-custom-list');
+      state.batchCustomList = el ? el.value : '';
+      updateAll();
+    }
+
+    function setUnit(u) {
+      state.unit = u;
+      const mmBtn = document.getElementById('unit-mm-btn');
+      const inBtn = document.getElementById('unit-in-btn');
+      const unitDisplay = document.getElementById('size-unit-display');
+      const unitAddon = document.getElementById('size-unit-addon');
+      const numInput = document.getElementById('size-number-input');
+      const valDisplay = document.getElementById('size-val-display');
+
+      if (u === 'mm') {
+        if (mmBtn) mmBtn.className = 'px-2 py-0.5 rounded font-semibold bg-emerald-500 text-slate-950 cursor-pointer';
+        if (inBtn) inBtn.className = 'px-2 py-0.5 rounded font-medium text-slate-400 hover:text-white cursor-pointer';
+        if (unitDisplay) unitDisplay.textContent = 'mm';
+        if (unitAddon) unitAddon.textContent = 'mm';
+        if (numInput) numInput.value = state.sizeMm.toFixed(1);
+        if (valDisplay) valDisplay.textContent = state.sizeMm.toFixed(1);
+      } else {
+        if (inBtn) inBtn.className = 'px-2 py-0.5 rounded font-semibold bg-emerald-500 text-slate-950 cursor-pointer';
+        if (mmBtn) mmBtn.className = 'px-2 py-0.5 rounded font-medium text-slate-400 hover:text-white cursor-pointer';
+        if (unitDisplay) unitDisplay.textContent = 'in';
+        if (unitAddon) unitAddon.textContent = 'in';
+        const inVal = (state.sizeMm / 25.4).toFixed(2);
+        if (numInput) numInput.value = inVal;
+        if (valDisplay) valDisplay.textContent = inVal;
+      }
+      updateAll();
+    }
+
+    function setSize(mm) {
+      state.sizeMm = Math.max(10, Math.min(500, mm));
+      const slider = document.getElementById('size-slider');
+      const numInput = document.getElementById('size-number-input');
+      const valDisplay = document.getElementById('size-val-display');
+      if (slider) slider.value = Math.min(300, state.sizeMm);
+      if (state.unit === 'mm') {
+        if (numInput) numInput.value = state.sizeMm.toFixed(1);
+        if (valDisplay) valDisplay.textContent = state.sizeMm.toFixed(1);
+      } else {
+        const inVal = (state.sizeMm / 25.4).toFixed(2);
+        if (numInput) numInput.value = inVal;
+        if (valDisplay) valDisplay.textContent = inVal;
+      }
+      updateAll();
+    }
+
+    function onSizeNumberInput() {
+      const numInput = document.getElementById('size-number-input');
+      const raw = numInput ? parseFloat(numInput.value) || 50 : 50;
+      const mm = state.unit === 'mm' ? raw : raw * 25.4;
+      setSize(mm);
+    }
+
+    function onSizeSlider() {
+      const slider = document.getElementById('size-slider');
+      const mm = slider ? parseFloat(slider.value) || 50 : 50;
+      setSize(mm);
+    }
+
+    function onRenderOptionChange() {
+      const qz = document.getElementById('opt-quiet-zone');
+      const lb = document.getElementById('opt-labels');
+      const cl = document.getElementById('opt-cutlines');
+      const ch = document.getElementById('opt-crosshairs');
+      const sr = document.getElementById('opt-sheet-ruler');
+      if (qz) state.quietZone = qz.checked;
+      if (lb) state.labels = lb.checked;
+      if (cl) state.cutlines = cl.checked;
+      if (ch) state.crosshairs = ch.checked;
+      if (sr) state.sheetRuler = sr.checked;
+      updateAll();
+    }
+
+    function onPaperChange() {
+      const ps = document.getElementById('paper-select');
+      const os = document.getElementById('orient-select');
+      if (ps) state.paper = ps.value;
+      if (os) state.orientation = os.value;
+      updateAll();
+    }
+
+    // ULTRA-RELIABLE TAB SWITCHER
+    function setPreviewTab(tab) {
+      state.previewTab = tab;
+      const tabList = ['sheet', 'single', 'calib', 'code'];
+      
+      tabList.forEach(t => {
+        const btn = document.getElementById('tab-' + t + '-btn');
+        const view = document.getElementById('view-' + t + '-tab');
+        
+        if (t === tab) {
+          if (btn) {
+            btn.className = 'py-3 px-3 font-semibold border-b-2 border-emerald-500 text-white flex items-center space-x-1.5 transition-all cursor-pointer bg-slate-900/60 rounded-t';
+          }
+          if (view) {
+            view.style.display = (t === 'sheet' || t === 'single') ? 'flex' : 'block';
+            view.classList.remove('hidden');
+          }
+        } else {
+          if (btn) {
+            btn.className = 'py-3 px-3 font-medium border-b-2 border-transparent text-slate-400 hover:text-emerald-400 hover:bg-slate-900/40 rounded-t flex items-center space-x-1.5 transition-all cursor-pointer';
+          }
+          if (view) {
+            view.style.display = 'none';
+            view.classList.add('hidden');
+          }
+        }
+      });
+
+      const zoomControls = document.getElementById('sheet-zoom-controls');
+      if (zoomControls) {
+        zoomControls.style.display = (tab === 'sheet') ? 'flex' : 'none';
+      }
+
+      try {
+        if (tab === 'calib') updateCalibrator();
+        if (tab === 'code') updateCodeSnippets();
+        if (tab === 'sheet') renderSheetPreview();
+      } catch(e) {
+        console.error('Tab update error:', e);
+      }
+    }
+
+    function changeSheetZoom(delta) {
+      state.sheetZoom = Math.max(0.3, Math.min(2.0, state.sheetZoom + delta));
+      const lbl = document.getElementById('zoom-level-label');
+      if (lbl) lbl.textContent = Math.round(state.sheetZoom * 100) + '%';
+      renderSheetPreview();
+    }
+
+    function fitSheetZoom() {
+      state.sheetZoom = 0.85;
+      const lbl = document.getElementById('zoom-level-label');
+      if (lbl) lbl.textContent = '85%';
+      renderSheetPreview();
+    }
+
+    function prevPage() {
+      if (state.curPage > 1) {
+        state.curPage--;
+        renderSheetPreview();
+      }
+    }
+
+    function nextPage() {
+      const total = computeTotalPages();
+      if (state.curPage < total) {
+        state.curPage++;
+        renderSheetPreview();
+      }
+    }
+
+    function generateTagGrid(famName, id) {
+      if (!window.MARKER_DATA) return null;
+      famName = famName || state.family;
+
+      // AprilTag
+      if (window.MARKER_DATA.apriltag && window.MARKER_DATA.apriltag[famName]) {
+        const fam = window.MARKER_DATA.apriltag[famName];
+        if (!fam || id >= fam.ncodes) return null;
+
+        const codeHex = fam.codes[id];
+        const code = BigInt(codeHex);
+        const totalW = fam.total_width;
+        const wBorder = fam.width_at_border;
+        const nbits = fam.nbits;
+        const bitX = fam.bit_x;
+        const bitY = fam.bit_y;
+
+        const grid = Array.from({ length: totalW }, () => Array(totalW).fill(0));
+
+        for (let i = 0; i < totalW; i++) {
+          grid[0][i] = 1;
+          grid[totalW - 1][i] = 1;
+          grid[i][0] = 1;
+          grid[i][totalW - 1] = 1;
+        }
+
+        const borderStart = Math.floor((totalW - wBorder) / 2);
+        for (let i = 0; i < nbits; i++) {
+          const bitVal = (code & (1n << BigInt(nbits - 1 - i))) !== 0n;
+          if (bitVal) {
+            grid[bitY[i] + borderStart][bitX[i] + borderStart] = 1;
+          }
+        }
+        return { grid, width: totalW, innerWidth: wBorder - 2 };
+      }
+
+      // ArUco
+      let dictData = null;
+      if (famName.startsWith('DICT_4X4')) dictData = window.MARKER_DATA.aruco['DICT_4X4_1000'];
+      else if (famName.startsWith('DICT_5X5')) dictData = window.MARKER_DATA.aruco['DICT_5X5_1000'];
+      else if (famName.startsWith('DICT_6X6')) dictData = window.MARKER_DATA.aruco['DICT_6X6_1000'];
+      else if (famName.startsWith('DICT_7X7')) dictData = window.MARKER_DATA.aruco['DICT_7X7_1000'];
+      else if (famName === 'DICT_ARUCO') dictData = window.MARKER_DATA.aruco['DICT_ARUCO'];
+      else if (window.MARKER_DATA.aruco && window.MARKER_DATA.aruco[famName]) dictData = window.MARKER_DATA.aruco[famName];
+
+      if (!dictData || id >= dictData.count) return null;
+
+      const markerSize = dictData.markerSize;
+      const mBytes = dictData.markers[id];
+      const bits = [];
+      for (const b of mBytes) {
+        for (let s = 7; s >= 0; s--) {
+          if (bits.length < markerSize * markerSize) {
+            bits.push((b & (1 << s)) ? 1 : 0);
+          }
+        }
+      }
+
+      const totalW = markerSize + 4;
+      const grid = Array.from({ length: totalW }, () => Array(totalW).fill(0));
+
+      for (let i = 0; i < totalW; i++) {
+        grid[0][i] = 1;
+        grid[totalW - 1][i] = 1;
+        grid[i][0] = 1;
+        grid[i][totalW - 1] = 1;
+      }
+
+      for (let r = 0; r < markerSize; r++) {
+        for (let c = 0; c < markerSize; c++) {
+          grid[r + 2][c + 2] = bits[r * markerSize + c];
+        }
+      }
+
+      return { grid, width: totalW, innerWidth: markerSize };
+    }
+
+    function generateTagSVG(famName, id, sizeMm, options) {
+      options = options || {};
+      const data = generateTagGrid(famName, id);
+      if (!data) return '<svg></svg>';
+
+      const grid = data.grid;
+      const width = data.width;
+      const viewBoxSize = width;
+      let rects = '';
+
+      for (let r = 0; r < width; r++) {
+        for (let c = 0; c < width; c++) {
+          if (grid[r][c] === 0) {
+            rects += '<rect x="' + c + '" y="' + r + '" width="1" height="1" fill="#000000"/>';
+          }
+        }
+      }
+
+      let crosshairsSvg = '';
+      if (options.crosshairs) {
+        crosshairsSvg = '<line x1="0" y1="0" x2="' + width + '" y2="' + width + '" stroke="#06b6d4" stroke-width="0.05" stroke-dasharray="0.2,0.2" opacity="0.4"/><line x1="' + width + '" y1="0" x2="0" y2="' + width + '" stroke="#06b6d4" stroke-width="0.05" stroke-dasharray="0.2,0.2" opacity="0.4"/>';
+      }
+
+      const widthAttr = options.isResponsive ? 'width="100%" height="100%"' : 'width="' + sizeMm + 'mm" height="' + sizeMm + 'mm"';
+      return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + viewBoxSize + ' ' + viewBoxSize + '" ' + widthAttr + ' shape-rendering="crispEdges"><rect width="' + viewBoxSize + '" height="' + viewBoxSize + '" fill="#ffffff"/>' + rects + crosshairsSvg + '</svg>';
+    }
+
+    function getSelectedIdList() {
+      if (state.genMode === 'single') return [state.tagId];
+
+      if (state.batchCustomList && state.batchCustomList.trim().length > 0) {
+        const parts = state.batchCustomList.split(',');
+        const ids = [];
+        const max = getMaxIdForFamily(state.family);
+        for (let p of parts) {
+          p = p.trim();
+          if (p.includes('-')) {
+            const range = p.split('-');
+            const s = parseInt(range[0]);
+            const e = parseInt(range[1]);
+            if (!isNaN(s) && !isNaN(e)) {
+              for (let i = Math.min(s, e); i <= Math.max(s, e); i++) {
+                if (i >= 0 && i <= max) ids.push(i);
+              }
+            }
+          } else {
+            const num = parseInt(p);
+            if (!isNaN(num) && num >= 0 && num <= max) ids.push(num);
+          }
+        }
+        return ids.length > 0 ? ids : [0];
+      } else {
+        const ids = [];
+        const max = getMaxIdForFamily(state.family);
+        for (let i = 0; i < state.batchCount; i++) {
+          const id = state.batchStart + i;
+          if (id <= max) ids.push(id);
+        }
+        return ids;
+      }
+    }
+
+    function computeSheetLayout() {
+      const p = PAPER_SIZES[state.paper] || PAPER_SIZES.a4;
+      const pageW = state.orientation === 'portrait' ? p.w : p.h;
+      const pageH = state.orientation === 'portrait' ? p.h : p.w;
+
+      const margin = 10;
+      const labelHeight = state.labels ? 7 : 0;
+      const tagW = state.sizeMm;
+      const tagH = state.sizeMm + labelHeight;
+      const spacing = 8;
+
+      const availW = pageW - 2 * margin;
+      const availH = pageH - 2 * margin - (state.sheetRuler ? 15 : 0);
+
+      const cols = Math.max(1, Math.floor((availW + spacing) / (tagW + spacing)));
+      const rows = Math.max(1, Math.floor((availH + spacing) / (tagH + spacing)));
+      const tagsPerPage = cols * rows;
+
+      return { pageW, pageH, margin, tagW, tagH, spacing, cols, rows, tagsPerPage };
+    }
+
+    function computeTotalPages() {
+      const ids = getSelectedIdList();
+      const layout = computeSheetLayout();
+      return Math.max(1, Math.ceil(ids.length / layout.tagsPerPage));
+    }
+
+    function renderSheetPreview() {
+      const container = document.getElementById('virtual-paper');
+      if (!container) return;
+      const layout = computeSheetLayout();
+      const ids = getSelectedIdList();
+      const totalPages = computeTotalPages();
+      state.curPage = Math.min(state.curPage, totalPages);
+
+      const curPageNum = document.getElementById('cur-page-num');
+      const totalPageNum = document.getElementById('total-page-num');
+      const sheetPagination = document.getElementById('sheet-pagination');
+      if (curPageNum) curPageNum.textContent = state.curPage;
+      if (totalPageNum) totalPageNum.textContent = totalPages;
+      if (sheetPagination) sheetPagination.style.display = totalPages > 1 ? 'flex' : 'none';
+
+      const zoom = state.sheetZoom;
+      const cssW = layout.pageW * 2.8 * zoom;
+      const cssH = layout.pageH * 2.8 * zoom;
+      container.style.width = cssW + 'px';
+      container.style.height = cssH + 'px';
+
+      const startIdx = (state.curPage - 1) * layout.tagsPerPage;
+      const pageIds = ids.slice(startIdx, startIdx + layout.tagsPerPage);
+
+      let tagsHtml = '';
+      const startX = layout.margin;
+      const startY = layout.margin + (state.sheetRuler ? 14 : 0);
+
+      pageIds.forEach((id, idx) => {
+        const r = Math.floor(idx / layout.cols);
+        const c = idx % layout.cols;
+        const posX = startX + c * (layout.tagW + layout.spacing);
+        const posY = startY + r * (layout.tagH + layout.spacing);
+
+        const svgMarkup = generateTagSVG(state.family, id, layout.tagW, { crosshairs: state.crosshairs });
+        const scalePx = 2.8 * zoom;
+
+        tagsHtml += '<div style="position: absolute; left: ' + (posX * scalePx) + 'px; top: ' + (posY * scalePx) + 'px; width: ' + (layout.tagW * scalePx) + 'px;">';
+        tagsHtml += '<div style="' + (state.cutlines ? 'border: 1px dashed #94a3b8;' : '') + ' background: white; padding: 1px;">' + svgMarkup + '</div>';
+        if (state.labels) {
+          tagsHtml += '<div style="font-size: ' + Math.max(8, 8 * zoom) + 'px; font-family: monospace; text-align: center; color: #334155; margin-top: 2px; line-height: 1.1;">ID: <strong>#' + id + '</strong> | ' + state.sizeMm.toFixed(1) + 'mm</div>';
+        }
+        tagsHtml += '</div>';
+      });
+
+      let rulerHtml = '';
+      if (state.sheetRuler) {
+        const scalePx = 2.8 * zoom;
+        const rulerW = 100 * scalePx;
+        rulerHtml = '<div style="position: absolute; top: ' + (6 * scalePx) + 'px; left: ' + (layout.margin * scalePx) + 'px; width: ' + rulerW + 'px; border-bottom: 2px solid #0f172a;"><div style="font-size: ' + Math.max(7, 7 * zoom) + 'px; font-family: monospace; color: #475569; display: flex; justify-content: space-between; margin-bottom: 2px;"><span>0mm</span><span>CALIBRATION SCALE (Exact 100mm)</span><span>100mm</span></div></div>';
+      }
+
+      container.innerHTML = '<div style="position: relative; width: 100%; height: 100%;">' + rulerHtml + tagsHtml + '</div>';
+    }
+
+    function updateAll() {
+      const famData = state.type === 'apriltag' && window.MARKER_DATA ? window.MARKER_DATA.apriltag[state.family] : { total_width: 8, nbits: 16 };
+      const totalW = famData ? famData.total_width : 10;
+      const bitSizeMm = state.sizeMm / totalW;
+      const innerSizeMm = bitSizeMm * (totalW - 4);
+
+      const innerSizeEl = document.getElementById('metric-inner-size');
+      const bitSizeEl = document.getElementById('metric-bit-size');
+      const detectRangeEl = document.getElementById('metric-detect-range');
+      if (innerSizeEl) innerSizeEl.textContent = innerSizeMm.toFixed(1) + ' mm';
+      if (bitSizeEl) bitSizeEl.textContent = bitSizeMm.toFixed(2) + ' mm';
+
+      const minRange = (state.sizeMm / 1000 * 4).toFixed(1);
+      const maxRange = (state.sizeMm / 1000 * 50).toFixed(1);
+      if (detectRangeEl) detectRangeEl.textContent = minRange + ' m ~ ' + maxRange + ' m';
+
+      const ids = getSelectedIdList();
+      const totalCountEl = document.getElementById('batch-total-count');
+      const pagesCountEl = document.getElementById('batch-pages-count');
+      if (totalCountEl) totalCountEl.textContent = ids.length;
+      if (pagesCountEl) pagesCountEl.textContent = computeTotalPages();
+
+      const singleSvg = generateTagSVG(state.family, state.tagId, 240, { crosshairs: state.crosshairs, isResponsive: true });
+      const singleContainer = document.getElementById('single-svg-container');
+      const singleInfo = document.getElementById('single-inspect-info');
+      if (singleContainer) singleContainer.innerHTML = singleSvg;
+      if (singleInfo) singleInfo.textContent = 'Family: ' + state.family + ' | ID: #' + state.tagId + ' | Matrix: ' + totalW + 'x' + totalW;
+
+      updateCalibrator();
+      updateCodeSnippets();
+      if (state.previewTab === 'sheet') renderSheetPreview();
+    }
+
+    function onCalibSlider() {
+      const slider = document.getElementById('calib-slider');
+      const px = slider ? parseInt(slider.value) || 324 : 324;
+      const cardMm = 85.60;
+      const dpi = Math.round((px / cardMm) * 25.4);
+      state.screenDpi = dpi;
+      try { localStorage.setItem('apriltag_calib_dpi', dpi); } catch(e) {}
+      const pxDisplay = document.getElementById('calib-px-display');
+      const dpiDisplay = document.getElementById('calib-dpi-display');
+      const card = document.getElementById('calib-card');
+      if (pxDisplay) pxDisplay.textContent = px;
+      if (dpiDisplay) dpiDisplay.textContent = dpi;
+      if (card) card.style.width = px + 'px';
+      updateCalibrator();
+    }
+
+    function resetCalibration() {
+      state.screenDpi = 96;
+      try { localStorage.removeItem('apriltag_calib_dpi'); } catch(e) {}
+      const slider = document.getElementById('calib-slider');
+      const pxDisplay = document.getElementById('calib-px-display');
+      const dpiDisplay = document.getElementById('calib-dpi-display');
+      const card = document.getElementById('calib-card');
+      if (slider) slider.value = 324;
+      if (pxDisplay) pxDisplay.textContent = 324;
+      if (dpiDisplay) dpiDisplay.textContent = 96;
+      if (card) card.style.width = '324px';
+      updateCalibrator();
+    }
+
+    function updateCalibrator() {
+      const pxPerMm = (state.screenDpi / 25.4);
+      const targetPx = Math.round(state.sizeMm * pxPerMm);
+      const targetSizeLabel = document.getElementById('calib-target-size-label');
+      if (targetSizeLabel) {
+        targetSizeLabel.textContent = state.sizeMm.toFixed(1) + ' mm (' + targetPx + ' px)';
+      }
+      const svg = generateTagSVG(state.family, state.tagId, state.sizeMm, { crosshairs: false, isResponsive: true });
+      const container = document.getElementById('calibrated-marker-preview');
+      if (container) {
+        container.style.width = targetPx + 'px';
+        container.style.height = targetPx + 'px';
+        container.innerHTML = svg;
+      }
+    }
+
+    function setCodeTab(tab) {
+      state.codeTab = tab;
+      const btns = { py: 'code-py-btn', ros: 'code-ros-btn', cpp: 'code-cpp-btn' };
+      Object.keys(btns).forEach(k => {
+        const b = document.getElementById(btns[k]);
+        if (b) {
+          if (k === tab) {
+            b.className = 'px-2.5 py-1 rounded font-semibold bg-emerald-500 text-slate-950 cursor-pointer';
+          } else {
+            b.className = 'px-2.5 py-1 rounded font-medium text-slate-400 hover:text-white cursor-pointer';
+          }
+        }
+      });
+      updateCodeSnippets();
+    }
+
+    function updateCodeSnippets() {
+      const pre = document.getElementById('code-snippet-pre');
+      const tagSizeMeters = (state.sizeMm / 1000).toFixed(4);
+      const metricLabel = document.getElementById('code-metric-label');
+      if (metricLabel) metricLabel.textContent = state.sizeMm.toFixed(1) + ' mm (' + tagSizeMeters + ' m)';
+      if (!pre) return;
+
+      if (state.codeTab === 'py') {
+        if (state.type === 'apriltag') {
+          pre.textContent = [
+            '# Python: AprilTag Detection via pupil-apriltags',
+            '# pip install pupil-apriltags opencv-python',
+            '',
+            'import cv2',
+            'import numpy as np',
+            'from pupil_apriltags import Detector',
+            '',
+            '# Initialize detector for ' + state.family,
+            'at_detector = Detector(',
+            '    families="' + state.family + '",',
+            '    nthreads=2,',
+            '    quad_decimate=1.0,',
+            '    quad_sigma=0.0,',
+            '    refine_edges=1',
+            ')',
+            '',
+            'cap = cv2.VideoCapture(0)',
+            'TAG_SIZE_METERS = ' + tagSizeMeters + '  # Physical print width (' + state.sizeMm + ' mm)',
+            '',
+            'while True:',
+            '    ret, frame = cap.read()',
+            '    if not ret: break',
+            '    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)',
+            '    tags = at_detector.detect(gray, estimate_tag_pose=False)',
+            '    for tag in tags:',
+            '        cv2.polylines(frame, [np.int32(tag.corners)], True, (0, 255, 0), 2)',
+            '        cv2.putText(frame, "ID: " + str(tag.tag_id), (int(tag.center[0]), int(tag.center[1])),',
+            '                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)',
+            '    cv2.imshow("AprilTag Tracker", frame)',
+            '    if cv2.waitKey(1) == 27: break',
+            '',
+            'cap.release()',
+            'cv2.destroyAllWindows()'
+          ].join('\n');
+        } else {
+          pre.textContent = [
+            '# Python: OpenCV cv2.aruco Marker Detection',
+            '# pip install opencv-contrib-python',
+            '',
+            'import cv2',
+            '',
+            'aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.' + state.family + ')',
+            'parameters = cv2.aruco.DetectorParameters()',
+            'detector = cv2.aruco.ArucoDetector(aruco_dict, parameters)',
+            '',
+            'cap = cv2.VideoCapture(0)',
+            'MARKER_SIZE = ' + tagSizeMeters + '  # Physical print width (' + state.sizeMm + ' mm)',
+            '',
+            'while True:',
+            '    ret, frame = cap.read()',
+            '    if not ret: break',
+            '    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)',
+            '    corners, ids, rejected = detector.detectMarkers(gray)',
+            '    if ids is not None:',
+            '        cv2.aruco.drawDetectedMarkers(frame, corners, ids)',
+            '    cv2.imshow("ArUco Tracker", frame)',
+            '    if cv2.waitKey(1) == 27: break',
+            '',
+            'cap.release()',
+            'cv2.destroyAllWindows()'
+          ].join('\n');
+        }
+      } else if (state.codeTab === 'ros') {
+        pre.textContent = [
+          '# ROS 2: apriltag_ros / isaac_ros_apriltag config (tags.yaml)',
+          '# Target Family: ' + state.family + ' | Print Size: ' + state.sizeMm + ' mm',
+          '',
+          'apriltag:',
+          '  ros__parameters:',
+          '    image_transport: raw',
+          '    family: "' + state.family + '"',
+          '    size: ' + tagSizeMeters + ' # Exact physical print width in meters',
+          '    max_hamming: 0',
+          '    detector:',
+          '      threads: 2',
+          '      decimate: 1.0',
+          '      blur: 0.0',
+          '      refine: 1',
+          '    tag:',
+          '      ids: [' + state.tagId + ']',
+          '      frames: ["tag_' + state.tagId + '_frame"]',
+          '      sizes: [' + tagSizeMeters + ']'
+        ].join('\n');
+      } else {
+        pre.textContent = [
+          '// C++: OpenCV ArUco Detection Example',
+          '#include <opencv2/opencv.hpp>',
+          '#include <opencv2/aruco.hpp>',
+          '',
+          'int main() {',
+          '    cv::VideoCapture cap(0);',
+          '    cv::aruco::Dictionary dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::' + state.family + ');',
+          '    cv::aruco::ArucoDetector detector(dictionary);',
+          '    cv::Mat frame, gray;',
+          '    const float markerLength = ' + tagSizeMeters + 'f; // in meters',
+          '    while (cap.read(frame)) {',
+          '        std::vector<int> ids;',
+          '        std::vector<std::vector<cv::Point2f>> corners;',
+          '        detector.detectMarkers(frame, corners, ids);',
+          '        if (!ids.empty()) {',
+          '            cv::aruco::drawDetectedMarkers(frame, corners, ids);',
+          '        }',
+          '        cv::imshow("Tracker", frame);',
+          '        if (cv::waitKey(1) == 27) break;',
+          '    }',
+          '    return 0;',
+          '}'
+        ].join('\n');
+      }
+    }
+
+    function copyCodeSnippet() {
+      const pre = document.getElementById('code-snippet-pre');
+      const code = pre ? pre.textContent : '';
+      navigator.clipboard.writeText(code).then(() => {
+        const label = document.getElementById('copy-code-text');
+        if (label) {
+          label.textContent = '✓ Copied!';
+          setTimeout(() => label.textContent = 'Copy Code', 2000);
+        }
+      });
+    }
+
+    function downloadPDF() {
+      if (!window.jspdf || !window.jspdf.jsPDF) {
+        alert('PDF generator is initializing, please try again in a second.');
+        return;
+      }
+
+      const jsPDF = window.jspdf.jsPDF;
+      const layout = computeSheetLayout();
+      const p = PAPER_SIZES[state.paper] || PAPER_SIZES.a4;
+      const isPortrait = state.orientation === 'portrait';
+      const pageW = isPortrait ? p.w : p.h;
+      const pageH = isPortrait ? p.h : p.w;
+
+      const doc = new jsPDF({
+        orientation: state.orientation,
+        unit: 'mm',
+        format: [pageW, pageH]
+      });
+
+      const ids = getSelectedIdList();
+      const totalPages = computeTotalPages();
+
+      for (let page = 1; page <= totalPages; page++) {
+        if (page > 1) doc.addPage([pageW, pageH], state.orientation);
+
+        if (state.sheetRuler) {
+          const rulerY = 8;
+          const rulerX = layout.margin;
+          const rulerW = 100;
+          doc.setDrawColor(0, 0, 0);
+          doc.setLineWidth(0.4);
+          doc.line(rulerX, rulerY, rulerX + rulerW, rulerY);
+          
+          for (let tick = 0; tick <= 100; tick += 10) {
+            const h = (tick % 50 === 0) ? 3 : 1.5;
+            doc.line(rulerX + tick, rulerY - h, rulerX + tick, rulerY);
+          }
+
+          doc.setFontSize(6);
+          doc.setTextColor(60, 60, 60);
+          doc.text('0 mm', rulerX, rulerY - 4);
+          doc.text('CALIBRATION SCALE (Exact 100 mm) — Verify with ruler. Printer must be Actual Size (100%).', rulerX + 18, rulerY - 4);
+          doc.text('100 mm', rulerX + rulerW - 7, rulerY - 4);
+        }
+
+        const startIdx = (page - 1) * layout.tagsPerPage;
+        const pageIds = ids.slice(startIdx, startIdx + layout.tagsPerPage);
+        const startX = layout.margin;
+        const startY = layout.margin + (state.sheetRuler ? 14 : 0);
+
+        pageIds.forEach((id, idx) => {
+          const r = Math.floor(idx / layout.cols);
+          const c = idx % layout.cols;
+          const posX = startX + c * (layout.tagW + layout.spacing);
+          const posY = startY + r * (layout.tagH + layout.spacing);
+
+          const tagData = generateTagGrid(state.family, id);
+          if (!tagData) return;
+
+          const grid = tagData.grid;
+          const width = tagData.width;
+          const bitSize = state.sizeMm / width;
+
+          doc.setFillColor(0, 0, 0);
+          for (let row = 0; row < width; row++) {
+            for (let col = 0; col < width; col++) {
+              if (grid[row][col] === 0) {
+                doc.rect(posX + col * bitSize, posY + row * bitSize, bitSize, bitSize, 'F');
+              }
+            }
+          }
+
+          if (state.cutlines) {
+            doc.setDrawColor(180, 180, 180);
+            doc.setLineWidth(0.15);
+            doc.setLineDashPattern([1.5, 1.5], 0);
+            doc.rect(posX, posY, state.sizeMm, state.sizeMm);
+            doc.setLineDashPattern([], 0);
+          }
+
+          if (state.crosshairs) {
+            doc.setDrawColor(0, 180, 210);
+            doc.setLineWidth(0.1);
+            doc.line(posX, posY, posX + 2, posY);
+            doc.line(posX, posY, posX, posY + 2);
+            doc.line(posX + state.sizeMm, posY, posX + state.sizeMm - 2, posY);
+            doc.line(posX + state.sizeMm, posY, posX + state.sizeMm, posY + 2);
+            doc.line(posX, posY + state.sizeMm, posX + 2, posY + state.sizeMm);
+            doc.line(posX, posY + state.sizeMm, posX, posY + state.sizeMm - 2);
+            doc.line(posX + state.sizeMm, posY + state.sizeMm, posX + state.sizeMm - 2, posY + state.sizeMm);
+            doc.line(posX + state.sizeMm, posY + state.sizeMm, posX + state.sizeMm, posY + state.sizeMm - 2);
+          }
+
+          if (state.labels) {
+            doc.setFontSize(7);
+            doc.setTextColor(30, 30, 30);
+            const labelText = state.family + ' | ID: #' + id + ' | ' + state.sizeMm.toFixed(1) + 'mm';
+            doc.text(labelText, posX + state.sizeMm / 2, posY + state.sizeMm + 4, { align: 'center' });
+          }
+        });
+
+        doc.setFontSize(6);
+        doc.setTextColor(120, 120, 120);
+        doc.text('Generated by AprilTag Print Studio (https://apriltag.skillary.ai) — Page ' + page + ' of ' + totalPages, pageW / 2, pageH - 4, { align: 'center' });
+      }
+
+      const filename = state.family + '_id_' + state.tagId + '_' + state.sizeMm + 'mm_' + state.paper + '.pdf';
+      doc.save(filename);
+    }
+
+    function downloadSVG() {
+      const svg = generateTagSVG(state.family, state.tagId, state.sizeMm, { crosshairs: state.crosshairs });
+      const blob = new Blob([svg], { type: 'image/svg+xml' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = state.family + '_id_' + state.tagId + '_' + state.sizeMm + 'mm.svg';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function copySVGCode() {
+      const svg = generateTagSVG(state.family, state.tagId, state.sizeMm, { crosshairs: false });
+      navigator.clipboard.writeText(svg).then(() => {
+        const btn = document.getElementById('copy-svg-btn');
+        if (btn) {
+          btn.textContent = '✓ Copied';
+          setTimeout(() => btn.textContent = '📋', 2000);
+        }
+      });
+    }
+
+    function downloadPNG(pixelSize) {
+      pixelSize = pixelSize || 2000;
+      const tagData = generateTagGrid(state.family, state.tagId);
+      if (!tagData) return;
+
+      const grid = tagData.grid;
+      const width = tagData.width;
+      const canvas = document.createElement('canvas');
+      canvas.width = pixelSize;
+      canvas.height = pixelSize;
+      const ctx = canvas.getContext('2d');
+      ctx.imageSmoothingEnabled = false;
+
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, pixelSize, pixelSize);
+
+      const bitPx = pixelSize / width;
+      ctx.fillStyle = '#000000';
+      for (let r = 0; r < width; r++) {
+        for (let c = 0; c < width; c++) {
+          if (grid[r][c] === 0) {
+            ctx.fillRect(Math.floor(c * bitPx), Math.floor(r * bitPx), Math.ceil(bitPx), Math.ceil(bitPx));
+          }
+        }
+      }
+
+      canvas.toBlob(blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = state.family + '_id_' + state.tagId + '_' + pixelSize + 'px.png';
+        a.click();
+        URL.revokeObjectURL(url);
+      }, 'image/png');
+    }
+
+    function applyPreset(preset) {
+      if (preset === 'drone_50mm') {
+        setMarkerType('apriltag');
+        state.family = 'tag36h11';
+        setSize(50.0);
+        setGenMode('single');
+        setTagId(0);
+      } else if (preset === 'slam_100mm') {
+        setMarkerType('apriltag');
+        state.family = 'tag36h11';
+        setSize(100.0);
+        setGenMode('single');
+        setTagId(0);
+      } else if (preset === 'a4_batch_12') {
+        setMarkerType('apriltag');
+        state.family = 'tag36h11';
+        setSize(50.0);
+        setGenMode('batch');
+        state.batchStart = 0;
+        state.batchCount = 12;
+      }
+      populateFamilyDropdown();
+      updateAll();
+    }
+  </script>
+</body>
+</html>
+"
