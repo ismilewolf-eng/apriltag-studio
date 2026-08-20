@@ -307,6 +307,12 @@
               <button onclick="setSize(101.6)" class="py-1 rounded bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 text-center font-mono cursor-pointer">4 inch</button>
             </div>
 
+            <!-- Physical Dimension Safety Warning -->
+            <div id="size-overflow-warning" class="hidden p-2 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[11px] flex items-center space-x-1.5">
+              <span>⚠️</span>
+              <span id="size-warning-text">Selected size exceeds printable page width. Auto-adjusting margins.</span>
+            </div>
+
             <!-- Computed Optical Specs -->
             <div class="p-2.5 rounded-lg bg-slate-950/70 border border-slate-800/80 text-[11px] space-y-1.5 text-slate-400">
               <div class="flex justify-between">
@@ -534,6 +540,9 @@
                 <button id="cam-toggle-btn" onclick="toggleCamera()" class="px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold text-xs flex items-center space-x-1.5 shadow-md shadow-cyan-500/20 transition-all cursor-pointer">
                   <span id="cam-toggle-icon">▶</span>
                   <span id="cam-toggle-label">Start Camera</span>
+                </button>
+                <button id="cam-snap-btn" onclick="captureSnapshot()" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-medium text-xs flex items-center space-x-1 transition-all cursor-pointer" title="Save verified snapshot image">
+                  <span>📸 Capture Proof</span>
                 </button>
                 <select id="cam-device-select" onchange="onCameraDeviceChange()" class="bg-slate-950 border border-slate-700 text-slate-300 rounded-lg px-2.5 py-1.5 text-xs outline-none cursor-pointer max-w-[200px]">
                   <option value="">Default Camera</option>
@@ -1263,25 +1272,27 @@
       if (state.genMode === 'single') return [state.tagId];
 
       if (state.batchCustomList && state.batchCustomList.trim().length > 0) {
-        const parts = state.batchCustomList.split(',');
-        const ids = [];
+        const raw = state.batchCustomList.replace(/[,;\s]+/g, ' ').trim();
+        const tokens = raw.split(' ');
+        const idsSet = new Set();
         const max = getMaxIdForFamily(state.family);
-        for (let p of parts) {
-          p = p.trim();
-          if (p.includes('-')) {
-            const range = p.split('-');
-            const s = parseInt(range[0]);
-            const e = parseInt(range[1]);
+        
+        for (let t of tokens) {
+          if (t.includes('-') || t.includes('..')) {
+            const parts = t.includes('-') ? t.split('-') : t.split('..');
+            const s = parseInt(parts[0]);
+            const e = parseInt(parts[1]);
             if (!isNaN(s) && !isNaN(e)) {
-              for (let i = Math.min(s, e); i <= Math.max(s, e); i++) {
-                if (i >= 0 && i <= max) ids.push(i);
-              }
+              const minV = Math.max(0, Math.min(s, e));
+              const maxV = Math.min(max, Math.max(s, e));
+              for (let i = minV; i <= maxV; i++) idsSet.add(i);
             }
           } else {
-            const num = parseInt(p);
-            if (!isNaN(num) && num >= 0 && num <= max) ids.push(num);
+            const num = parseInt(t);
+            if (!isNaN(num) && num >= 0 && num <= max) idsSet.add(num);
           }
         }
+        const ids = Array.from(idsSet);
         return ids.length > 0 ? ids : [0];
       } else {
         const ids = [];
