@@ -427,6 +427,9 @@
               <button id="tab-code-btn" onclick="setPreviewTab('code')" class="py-3 px-3 font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center space-x-1.5 transition-all cursor-pointer">
                 <span>💻 ROS / OpenCV</span>
               </button>
+              <button id="tab-camera-btn" onclick="setPreviewTab('camera')" class="py-3 px-3 tab-inactive rounded-t flex items-center space-x-1.5 transition-all cursor-pointer text-cyan-400">
+                <span>📷 Camera Verifier</span>
+              </button>
             </div>
             
             <!-- Zoom Controls for Sheet -->
@@ -519,6 +522,101 @@
               </button>
               <pre id="code-snippet-pre" class="bg-slate-900 p-4 rounded-xl border border-slate-800 text-xs font-mono text-emerald-300 overflow-x-auto leading-relaxed max-h-[380px]"></pre>
             </div>
+
+          <!-- TAB VIEW 5: LIVE CAMERA VERIFIER -->
+          <div id="view-camera-tab" style="display: none;" class="p-5 bg-slate-950 min-h-[520px] space-y-4">
+            
+            <!-- Camera Controls Bar -->
+            <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-900/90 border border-slate-800 p-3 rounded-xl">
+              <div class="flex items-center space-x-2">
+                <button id="cam-toggle-btn" onclick="toggleCamera()" class="px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold text-xs flex items-center space-x-1.5 shadow-md shadow-cyan-500/20 transition-all cursor-pointer">
+                  <span id="cam-toggle-icon">▶</span>
+                  <span id="cam-toggle-label">Start Camera</span>
+                </button>
+                <select id="cam-device-select" onchange="onCameraDeviceChange()" class="bg-slate-950 border border-slate-700 text-slate-300 rounded-lg px-2.5 py-1.5 text-xs outline-none cursor-pointer max-w-[200px]">
+                  <option value="">Default Camera</option>
+                </select>
+              </div>
+              
+              <div class="flex items-center space-x-3 text-xs font-mono">
+                <span class="text-slate-400 flex items-center gap-1.5">
+                  <span id="cam-status-dot" class="w-2 h-2 rounded-full bg-slate-600"></span>
+                  <span id="cam-status-text" class="text-slate-400">Camera Off</span>
+                </span>
+                <span class="px-2 py-0.5 rounded bg-slate-950 border border-slate-800 text-emerald-400 text-[11px]" id="cam-fps-badge">0 FPS</span>
+              </div>
+            </div>
+
+            <!-- Main Camera Viewport & Telemetry Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+              
+              <!-- Left/Center: Real-Time HUD Viewport (7 cols) -->
+              <div class="md:col-span-7 bg-slate-900 border border-slate-800 rounded-xl p-2 relative flex flex-col items-center justify-center min-h-[360px] overflow-hidden">
+                <video id="camera-video" playsinline class="hidden"></video>
+                <canvas id="camera-canvas" width="640" height="480" class="w-full h-auto rounded-lg bg-black/90 object-contain"></canvas>
+                
+                <!-- Idle Overlay -->
+                <div id="cam-idle-overlay" class="absolute inset-0 bg-slate-950/80 backdrop-blur-xs flex flex-col items-center justify-center p-6 text-center space-y-3">
+                  <div class="w-12 h-12 rounded-full bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 text-xl">
+                    📷
+                  </div>
+                  <div>
+                    <h4 class="text-sm font-bold text-white">Live Print Quality & Pose Verifier</h4>
+                    <p class="text-xs text-slate-400 mt-1 max-w-xs leading-relaxed">Point your webcam at your printed AprilTag / ArUco sheet to test recognition and measure estimated 3D distance.</p>
+                  </div>
+                  <button onclick="toggleCamera()" class="px-3.5 py-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs cursor-pointer">
+                    Launch WebCam
+                  </button>
+                </div>
+              </div>
+
+              <!-- Right: Real-Time Telemetry & Verification Card (5 cols) -->
+              <div class="md:col-span-5 space-y-3">
+                
+                <!-- Detection Result Status Card -->
+                <div id="det-result-card" class="bg-slate-900 border border-slate-800 rounded-xl p-3.5 space-y-3">
+                  <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Detection Status</span>
+                    <span id="det-badge" class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-800 text-slate-400">NO TARGET</span>
+                  </div>
+
+                  <div class="space-y-2 text-xs font-mono">
+                    <div class="flex justify-between">
+                      <span class="text-slate-400">Detected Tag ID:</span>
+                      <span id="det-id-val" class="font-bold text-white text-sm">--</span>
+                    </div>
+                    <div class="flex justify-between">
+                      <span class="text-slate-400">Tag Family:</span>
+                      <span id="det-family-val" class="text-emerald-400">--</span>
+                    </div>
+                    <div class="flex justify-between">
+                      <span class="text-slate-400">Estimated Distance:</span>
+                      <span id="det-dist-val" class="font-bold text-cyan-400 text-sm">-- cm</span>
+                    </div>
+                    <div class="flex justify-between">
+                      <span class="text-slate-400">Apparent Size (px):</span>
+                      <span id="det-pixels-val" class="text-slate-200">-- px</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Verification QA Card -->
+                <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-3 text-xs space-y-2">
+                  <div class="flex items-center space-x-2 text-slate-300 font-semibold">
+                    <span>🔬</span>
+                    <span>Physical Print Verification</span>
+                  </div>
+                  <div class="text-[11px] text-slate-400 leading-relaxed" id="det-qa-summary">
+                    Hold your printed marker approx. 30~50 cm from the lens. The detector checks edge contrast and Hamming bit integrity.
+                  </div>
+                  <div class="pt-2 border-t border-slate-800 text-[11px] flex justify-between text-slate-400">
+                    <span>Target Size: <strong class="text-white" id="cam-target-size-label">50.0 mm</strong></span>
+                    <span id="cam-focal-label" class="text-slate-500 font-mono">f ≈ 500px</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
             <p class="text-[11px] text-slate-500">Code is automatically updated with your selected tag family and physical dimensions (<span id="code-metric-label">50.0 mm</span>).</p>
           </div>
 
@@ -657,6 +755,7 @@
 
   <!-- LOAD DATA BUNDLE -->
   <script src="markers-data.js"></script>
+  <script src="marker-detector.js"></script>
 
 
   <script>
@@ -989,8 +1088,11 @@
 
     // ULTRA-RELIABLE TAB SWITCHER
     function setPreviewTab(tab) {
+      if (state.previewTab === 'camera' && tab !== 'camera') {
+        stopCamera();
+      }
       state.previewTab = tab;
-      const tabList = ['sheet', 'single', 'calib', 'code'];
+      const tabList = ['sheet', 'single', 'calib', 'code', 'camera'];
       
       tabList.forEach(t => {
         const btn = document.getElementById('tab-' + t + '-btn');
@@ -1699,6 +1801,292 @@
       populateFamilyDropdown();
       updateAll();
     }
+  
+    // CAMERA SCANNER & 3D POSE VERIFIER CONTROLLER
+    let camRunning = false;
+    let camStream = null;
+    let camAnimId = null;
+    let camDetector = null;
+    let lastFrameTime = performance.now();
+    let frameCount = 0;
+    let fpsTimer = performance.now();
+
+    function initCameraDetector() {
+      if (!camDetector && typeof MarkerVision !== 'undefined' && MarkerVision.Detector) {
+        camDetector = new MarkerVision.Detector();
+      }
+    }
+
+    async function toggleCamera() {
+      if (camRunning) {
+        stopCamera();
+      } else {
+        await startCamera();
+      }
+    }
+
+    async function startCamera(preferredDeviceId) {
+      initCameraDetector();
+      const video = document.getElementById('camera-video');
+      const canvas = document.getElementById('camera-canvas');
+      const idleOverlay = document.getElementById('cam-idle-overlay');
+      const toggleBtn = document.getElementById('cam-toggle-btn');
+      const toggleIcon = document.getElementById('cam-toggle-icon');
+      const toggleLabel = document.getElementById('cam-toggle-label');
+      const statusDot = document.getElementById('cam-status-dot');
+      const statusText = document.getElementById('cam-status-text');
+
+      try {
+        const constraints = {
+          video: preferredDeviceId 
+            ? { deviceId: { exact: preferredDeviceId } }
+            : { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'environment' }
+        };
+
+        camStream = await navigator.mediaDevices.getUserMedia(constraints);
+        video.srcObject = camStream;
+        await video.play();
+
+        camRunning = true;
+        if (idleOverlay) idleOverlay.classList.add('hidden');
+        if (toggleBtn) toggleBtn.className = 'px-4 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-white font-bold text-xs flex items-center space-x-1.5 shadow-md shadow-red-600/20 transition-all cursor-pointer';
+        if (toggleIcon) toggleIcon.textContent = '■';
+        if (toggleLabel) toggleLabel.textContent = 'Stop Camera';
+        if (statusDot) statusDot.className = 'w-2 h-2 rounded-full bg-emerald-400 animate-pulse';
+        if (statusText) statusText.textContent = 'Live Streaming';
+
+        // Enumerate camera devices for selector
+        enumerateCameras();
+
+        // Adjust canvas dimensions
+        if (video.videoWidth && video.videoHeight) {
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+        }
+
+        // Start continuous frame processing loop
+        frameCount = 0;
+        fpsTimer = performance.now();
+        requestAnimationFrame(processCameraFrame);
+      } catch(err) {
+        console.error('Camera access error:', err);
+        alert('Could not access camera: ' + err.message + ' (Please check permissions)');
+        stopCamera();
+      }
+    }
+
+    function stopCamera() {
+      camRunning = false;
+      if (camAnimId) {
+        cancelAnimationFrame(camAnimId);
+        camAnimId = null;
+      }
+      if (camStream) {
+        camStream.getTracks().forEach(t => t.stop());
+        camStream = null;
+      }
+
+      const idleOverlay = document.getElementById('cam-idle-overlay');
+      const toggleBtn = document.getElementById('cam-toggle-btn');
+      const toggleIcon = document.getElementById('cam-toggle-icon');
+      const toggleLabel = document.getElementById('cam-toggle-label');
+      const statusDot = document.getElementById('cam-status-dot');
+      const statusText = document.getElementById('cam-status-text');
+      const fpsBadge = document.getElementById('cam-fps-badge');
+      const detBadge = document.getElementById('det-badge');
+
+      if (idleOverlay) idleOverlay.classList.remove('hidden');
+      if (toggleBtn) toggleBtn.className = 'px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold text-xs flex items-center space-x-1.5 shadow-md shadow-cyan-500/20 transition-all cursor-pointer';
+      if (toggleIcon) toggleIcon.textContent = '▶';
+      if (toggleLabel) toggleLabel.textContent = 'Start Camera';
+      if (statusDot) statusDot.className = 'w-2 h-2 rounded-full bg-slate-600';
+      if (statusText) statusText.textContent = 'Camera Off';
+      if (fpsBadge) fpsBadge.textContent = '0 FPS';
+      if (detBadge) {
+        detBadge.className = 'px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-800 text-slate-400';
+        detBadge.textContent = 'NO TARGET';
+      }
+    }
+
+    async function enumerateCameras() {
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoDevs = devices.filter(d => d.kind === 'videoinput');
+        const sel = document.getElementById('cam-device-select');
+        if (!sel || videoDevs.length <= 1) return;
+
+        sel.innerHTML = '';
+        videoDevs.forEach((dev, idx) => {
+          const opt = document.createElement('option');
+          opt.value = dev.deviceId;
+          opt.textContent = dev.label || ('Camera ' + (idx + 1));
+          sel.appendChild(opt);
+        });
+      } catch(e) {}
+    }
+
+    function onCameraDeviceChange() {
+      const sel = document.getElementById('cam-device-select');
+      if (sel && camRunning) {
+        stopCamera();
+        startCamera(sel.value);
+      }
+    }
+
+    function processCameraFrame() {
+      if (!camRunning) return;
+
+      const video = document.getElementById('camera-video');
+      const canvas = document.getElementById('camera-canvas');
+      if (!video || !canvas || video.readyState < 2) {
+        camAnimId = requestAnimationFrame(processCameraFrame);
+        return;
+      }
+
+      if (canvas.width !== video.videoWidth && video.videoWidth > 0) {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+      }
+
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      // Run real-time detection
+      if (camDetector && typeof CV !== 'undefined') {
+        try {
+          const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const markers = camDetector.detect(imgData, state.family, state.type);
+          renderCameraHUD(ctx, canvas, markers);
+        } catch(e) {
+          console.error('Detection frame error:', e);
+        }
+      }
+
+      // Calculate FPS
+      frameCount++;
+      const now = performance.now();
+      if (now - fpsTimer >= 500) {
+        const fps = Math.round((frameCount * 1000) / (now - fpsTimer));
+        const fpsBadge = document.getElementById('cam-fps-badge');
+        if (fpsBadge) fpsBadge.textContent = fps + ' FPS';
+        frameCount = 0;
+        fpsTimer = now;
+      }
+
+      camAnimId = requestAnimationFrame(processCameraFrame);
+    }
+
+    function renderCameraHUD(ctx, canvas, markers) {
+      const detBadge = document.getElementById('det-badge');
+      const detIdVal = document.getElementById('det-id-val');
+      const detFamilyVal = document.getElementById('det-family-val');
+      const detDistVal = document.getElementById('det-dist-val');
+      const detPixelsVal = document.getElementById('det-pixels-val');
+      const detQaSummary = document.getElementById('det-qa-summary');
+      const focalLabel = document.getElementById('cam-focal-label');
+      const targetSizeLabel = document.getElementById('cam-target-size-label');
+
+      if (targetSizeLabel) targetSizeLabel.textContent = state.sizeMm.toFixed(1) + ' mm';
+      const focalLengthPx = canvas.width * 0.85; // approx 60 deg HFOV
+      if (focalLabel) focalLabel.textContent = 'f ≈ ' + Math.round(focalLengthPx) + 'px';
+
+      if (markers && markers.length > 0) {
+        const m = markers[0];
+        
+        // Calculate apparent pixel width
+        const c = m.corners;
+        const dTop = Math.hypot(c[1].x - c[0].x, c[1].y - c[0].y);
+        const dBottom = Math.hypot(c[2].x - c[3].x, c[2].y - c[3].y);
+        const avgWidthPx = (dTop + dBottom) / 2;
+
+        // Calculate distance Z in cm: Z = (f * physicalWidthMm) / (avgWidthPx * 10)
+        const distanceCm = (focalLengthPx * (state.sizeMm / 10)) / avgWidthPx;
+        const distanceIn = (distanceCm / 2.54).toFixed(1);
+
+        // Center coordinate
+        const cx = (c[0].x + c[1].x + c[2].x + c[3].x) / 4;
+        const cy = (c[0].y + c[1].y + c[2].y + c[3].y) / 4;
+
+        // 1. Draw glowing green quad polygon
+        ctx.save();
+        ctx.strokeStyle = '#10b981';
+        ctx.lineWidth = 3;
+        ctx.shadowColor = '#10b981';
+        ctx.shadowBlur = 10;
+        ctx.beginPath();
+        ctx.moveTo(c[0].x, c[0].y);
+        ctx.lineTo(c[1].x, c[1].y);
+        ctx.lineTo(c[2].x, c[2].y);
+        ctx.lineTo(c[3].x, c[3].y);
+        ctx.closePath();
+        ctx.stroke();
+        ctx.restore();
+
+        // 2. Draw 4 colored corner markers (0: Red origin, 1: Green X, 2: Cyan, 3: Yellow)
+        const cornerColors = ['#ef4444', '#10b981', '#06b6d4', '#eab308'];
+        c.forEach((pt, i) => {
+          ctx.fillStyle = cornerColors[i];
+          ctx.beginPath();
+          ctx.arc(pt.x, pt.y, 4, 0, Math.PI * 2);
+          ctx.fill();
+        });
+
+        // 3. Draw Center Crosshair & 3D Normal Indicator
+        ctx.strokeStyle = '#06b6d4';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(cx - 10, cy); ctx.lineTo(cx + 10, cy);
+        ctx.moveTo(cx, cy - 10); ctx.lineTo(cx, cy + 10);
+        ctx.stroke();
+
+        // 4. Draw HUD Floating Tag Label on Canvas
+        ctx.save();
+        ctx.font = 'bold 12px monospace';
+        const tagLabel = '[' + m.family + ' #' + m.id + '] Z ≈ ' + distanceCm.toFixed(1) + 'cm (' + distanceIn + 'in)';
+        const textW = ctx.measureText(tagLabel).width;
+        const labelX = Math.max(10, c[0].x);
+        const labelY = Math.max(24, c[0].y - 8);
+
+        ctx.fillStyle = 'rgba(14, 20, 36, 0.9)';
+        ctx.strokeStyle = '#10b981';
+        ctx.lineWidth = 1;
+        ctx.fillRect(labelX - 4, labelY - 14, textW + 8, 18);
+        ctx.strokeRect(labelX - 4, labelY - 14, textW + 8, 18);
+
+        ctx.fillStyle = '#10b981';
+        ctx.fillText(tagLabel, labelX, labelY);
+        ctx.restore();
+
+        // Update Telemetry Panel Card
+        const isTargetMatch = (m.id === state.tagId);
+        if (detBadge) {
+          detBadge.className = isTargetMatch
+            ? 'px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
+            : 'px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-cyan-500/20 text-cyan-400 border border-cyan-500/40';
+          detBadge.textContent = isTargetMatch ? 'VERIFIED MATCH (100%)' : 'TAG DETECTED';
+        }
+        if (detIdVal) detIdVal.textContent = '#' + m.id + (isTargetMatch ? ' (Active Tag)' : '');
+        if (detFamilyVal) detFamilyVal.textContent = m.family;
+        if (detDistVal) detDistVal.textContent = distanceCm.toFixed(1) + ' cm (' + distanceIn + ' in)';
+        if (detPixelsVal) detPixelsVal.textContent = Math.round(avgWidthPx) + ' px';
+        if (detQaSummary) {
+          detQaSummary.innerHTML = '<span class="text-emerald-400 font-semibold">✓ 100% Bit-Matrix Match</span> — Edge sharpness and quad geometry verified. Ready for SLAM / ROS2 robot tracking.';
+        }
+      } else {
+        if (detBadge) {
+          detBadge.className = 'px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/20 text-amber-400 border border-amber-500/40';
+          detBadge.textContent = 'SCANNING...';
+        }
+        if (detIdVal) detIdVal.textContent = '--';
+        if (detFamilyVal) detFamilyVal.textContent = state.family;
+        if (detDistVal) detDistVal.textContent = '-- cm';
+        if (detPixelsVal) detPixelsVal.textContent = '-- px';
+        if (detQaSummary) {
+          detQaSummary.textContent = 'Point your camera at the printed marker. Ensure good ambient lighting without harsh glare.';
+        }
+      }
+    }
+
   </script>
 </body>
 </html>

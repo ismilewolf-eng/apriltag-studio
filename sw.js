@@ -3,6 +3,7 @@ const ASSETS = [
   './',
   './index.html',
   './markers-data.js',
+  './marker-detector.js',
   './manifest.json'
 ];
 
